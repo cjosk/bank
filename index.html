@@ -287,7 +287,8 @@
                     const dateA = a.processedAt || a.submittedAt || a.requestedAt;
                     const dateB = b.processedAt || b.submittedAt || b.requestedAt;
                     if (!dateA || !dateB) return 0;
-                    return dateB.toDate() - a.toDate();
+                    // HATA DÜZELTMESİ: 'a.toDate()' olan yanlış kod 'dateA.toDate()' olarak düzeltildi.
+                    return dateB.toDate() - dateA.toDate();
                 });
                 if (allHistory.length === 0) {
                     historyListEl.innerHTML = `<p class="text-center text-gray-400">Henüz bir işlem yapmadınız.</p>`;
