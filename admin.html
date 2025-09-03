@@ -191,7 +191,6 @@
 
             const { collectionName, id } = rejectionInfo;
             const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
-            // GÜNCELLEME: Reddedilen taleplere de işlenme zamanı (processedAt) eklendi.
             await writeBatch(db).update(ref, { 
                 status: 'rejected', 
                 rejectionReason: reason,
@@ -342,36 +341,34 @@
             const nameFilter = document.getElementById('history-search-name').value.toLowerCase();
             const dateFilter = document.getElementById('history-search-date').value;
 
-            // GÜNCELLEME: Sorgu basitleştirildi ve daha güvenilir hale getirildi.
             const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
             const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
 
-            const completedDepositsQuery = query(depositsRef, where("status", "==", "completed"), orderBy("processedAt", "desc"));
-            const rejectedDepositsQuery = query(depositsRef, where("status", "==", "rejected"), orderBy("processedAt", "desc"));
-            const completedWithdrawalsQuery = query(withdrawalsRef, where("status", "==", "completed"), orderBy("processedAt", "desc"));
-            const rejectedWithdrawalsQuery = query(withdrawalsRef, where("status", "==", "rejected"), orderBy("processedAt", "desc"));
+            const depositsQuery = query(depositsRef, where("status", "!=", "pending"));
+            const withdrawalsQuery = query(withdrawalsRef, where("status", "!=", "pending"));
 
-            const [
-                completedDepositsSnap, rejectedDepositsSnap,
-                completedWithdrawalsSnap, rejectedWithdrawalsSnap
-            ] = await Promise.all([
-                getDocs(completedDepositsQuery), getDocs(rejectedDepositsQuery),
-                getDocs(completedWithdrawalsQuery), getDocs(rejectedWithdrawalsQuery)
+            const [depositsSnap, withdrawalsSnap] = await Promise.all([
+                getDocs(depositsQuery),
+                getDocs(withdrawalsQuery)
             ]);
             
             let allHistory = [
-                ...completedDepositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
-                ...rejectedDepositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
-                ...completedWithdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' })),
-                ...rejectedWithdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
-            ].sort((a, b) => b.processedAt.toDate() - a.processedAt.toDate());
+                ...depositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
+                ...withdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
+            ].sort((a, b) => {
+                // HATA DÜZELTMESİ: Eksik zaman damgalarına karşı daha güvenli sıralama.
+                const dateA = a.processedAt || a.submittedAt || a.requestedAt;
+                const dateB = b.processedAt || b.submittedAt || b.requestedAt;
+                if (!dateA || !dateB) return 0; // Eğer bir tarih yoksa sıralamayı değiştirme
+                return dateB.toDate() - dateA.toDate();
+            });
 
             if (nameFilter) {
                 allHistory = allHistory.filter(item => (item.submitterName || item.requesterName).toLowerCase().includes(nameFilter));
             }
             if (dateFilter) {
                 allHistory = allHistory.filter(item => {
-                    const itemDate = item.processedAt.toDate().toISOString().split('T')[0];
+                    const itemDate = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toISOString().split('T')[0];
                     return itemDate === dateFilter;
                 });
             }
@@ -382,7 +379,8 @@
                 return;
             }
             historyListEl.innerHTML = allHistory.map(item => {
-                const date = item.processedAt.toDate().toLocaleString('tr-TR');
+                // HATA DÜZELTMESİ: Eksik zaman damgalarına karşı daha güvenli tarih gösterme.
+                const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
                 const isDeposit = item.type === 'Loot Yatırma';
                 const name = isDeposit ? item.submitterName : item.requesterName;
                 const amount = isDeposit ? item.processedAmount : item.amount;
@@ -393,7 +391,7 @@
                         <div class="flex justify-between items-center">
                             <div>
                                 <p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>
-                                <p class="text-sm ${statusClass}">${amount.toLocaleString('tr-TR')} Silver</p>
+                                <p class="text-sm ${statusClass}">${(amount || 0).toLocaleString('tr-TR')} Silver</p>
                                 ${reasonHtml}
                             </div>
                             <p class="text-xs text-gray-400">${date}</p>
@@ -408,7 +406,6 @@
 
             const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
 
-            const now = new Date();
             const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
             const weekAgo = new Date(new Date().setDate(new Date().getDate() - 7));
             
@@ -417,7 +414,7 @@
 
             depositsSnapshot.docs.forEach(doc => {
                 const data = doc.data();
-                if (!data.processedAt) return; // Henüz işlenmemişse atla
+                if (!data.processedAt) return; 
                 const amount = data.processedAmount || 0;
                 const processedDate = data.processedAt.toDate();
 
