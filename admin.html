@@ -133,11 +133,15 @@
                     const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
                     
                     if (data.submitterName) { // Deposit
+                        // GÖRSEL GÖRÜNTÜLEME LİNKİ EKLENDİ
+                        const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
+                        
                         return `
                         <div class="card rounded-lg p-4" id="deposit-${id}">
                             <p class="text-xs text-gray-400">${date}</p>
                             <p>Talebi Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
                             <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
+                            ${screenshotLink}
                             <div class="my-4">
                                 <label class="block text-sm">Toplam Satış Tutarı (Silver)</label>
                                 <input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000">
