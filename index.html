@@ -80,7 +80,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // HATA DÜZELTMESİ: Eksik olan 'getDocs' fonksiyonu buraya eklendi.
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // --- FIREBASE YAPILANDIRMASI ---
@@ -115,7 +116,7 @@
             const nameLower = name.toLowerCase();
             const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
             const q = query(usersRef, where("inGameName_lowercase", "==", nameLower));
-            const snapshot = await getDocs(q);
+            const snapshot = await getDocs(q); // Bu satır 'getDocs' fonksiyonunu kullanıyor
 
             if (snapshot.empty) {
                 return showNotification("Bu isim sistemde kayıtlı değil. Lütfen admin ile görüşün.", true);
@@ -175,7 +176,7 @@
                     submitterId: currentUser.id,
                     submitterName: currentUser.inGameName,
                     partyMembers: partyMembers,
-                    imageUrl: imageUrl, // <-- DOĞRU URL BURAYA EKLENDİ
+                    imageUrl: imageUrl,
                     status: 'pending',
                     submittedAt: serverTimestamp()
                 });
@@ -242,7 +243,7 @@
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            storage = getStorage(app); // Storage servisini başlat
+            storage = getStorage(app);
             try {
                 await signInAnonymously(auth);
                 const savedUser = localStorage.getItem('loggedInUser');
