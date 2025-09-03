@@ -8,14 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
-        .form-input { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
-        .btn-approve { background-color: #38a169; }
-        .btn-approve:hover { background-color: #2f855a; }
-        .btn-reject { background-color: #e53e3e; }
-        .btn-reject:hover { background-color: #c53030; }
+        .form-input, .form-textarea { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
         .card { background-color: #2d3748; border: 1px solid #4a5568; }
-        .btn-action { background-color: #4a5568; border: 1px solid #718096; transition: all 0.2s; }
-        .btn-action:hover { background-color: #718096; border-color: #a0aec0; }
+        .btn-action { background-color: #4a5568; border: 1px solid #718096; }
+        .tab-button { border-color: transparent; }
+        .tab-button.active { border-color: #4f46e5; color: white; }
+        .modal-backdrop { background-color: rgba(0,0,0,0.7); display: flex; }
     </style>
 </head>
 <body class="antialiased">
@@ -33,43 +31,104 @@
         </div>
         
         <div id="admin-dashboard-view" class="hidden w-full max-w-7xl mx-auto">
-            <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-700">
+            <header class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
                 <h1 class="text-3xl font-bold text-white">Yönetici Paneli</h1>
                 <button id="admin-logout-button" class="px-4 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700">Çıkış Yap</button>
             </header>
+            
+            <div class="mb-6 border-b border-gray-700">
+                <nav class="flex flex-wrap -mb-px space-x-4" aria-label="Tabs">
+                    <button data-tab="requests" class="tab-button active py-2 px-4 font-medium text-gray-300 border-b-2">Bekleyen Talepler</button>
+                    <button data-tab="history" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">İşlem Geçmişi</button>
+                    <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar & İstatistikler</button>
+                    <button data-tab="guild" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Guild Yönetimi</button>
+                </nav>
+            </div>
 
-            <div class="card p-6 rounded-lg mb-8">
-                <h2 class="text-xl font-bold text-white mb-4">Guild Yönetimi</h2>
-                <p class="text-gray-300 mb-4">Yeni üyeleri sisteme kaydetmek veya mevcut üyeleri senkronize etmek için aşağıdaki butonu kullanın.</p>
-                <button id="update-guild-members-button" class="btn-action w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white">Klan Üyelerini Veritabanıyla Senkronize Et</button>
+            <div id="requests-content" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
+                        <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Çekim Talepleri</h2>
+                        <div id="withdraw-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
+                 <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <input type="text" id="history-search-name" class="form-input flex-grow p-2 rounded-md" placeholder="Oyuncu adına göre ara...">
+                    <input type="date" id="history-search-date" class="form-input p-2 rounded-md">
+                </div>
+                <div id="history-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Geçmiş yükleniyor...</p></div>
+            </div>
+
+            <div id="reports-content" class="tab-content hidden">
+                 <h2 class="text-2xl font-bold text-white mb-4">Genel Raporlar</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Toplam Satış Hacmi</p>
+                        <p id="total-volume" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Haftalık Satış (Son 7 Gün)</p>
+                        <p id="weekly-volume" class="text-2xl font-bold">0</p>
+                    </div>
+                     <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Günlük Satış (Bugün)</p>
+                        <p id="daily-volume" class="text-2xl font-bold">0</p>
+                    </div>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">En Çok Loot Yatıranlar</h3>
+                        <div id="top-depositors" class="space-y-2"><p class="text-center text-gray-400">Veri yok.</p></div>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-bold mb-2">En Çok Çekim Yapanlar</h3>
+                        <div id="top-withdrawers" class="space-y-2"><p class="text-center text-gray-400">Veri yok.</p></div>
+                    </div>
+                 </div>
             </div>
             
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                    <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
-                    <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Çekim Talepleri</h2>
-                    <div id="withdraw-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+            <div id="guild-content" class="tab-content hidden">
+                 <div class="card p-6 rounded-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Guild Yönetimi</h2>
+                    <p class="text-gray-300 mb-4">Yeni üyeleri sisteme kaydetmek veya mevcut üyeleri senkronize etmek için aşağıdaki butonu kullanın.</p>
+                    <button id="update-guild-members-button" class="btn-action w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white">Klan Üyelerini Veritabanıyla Senkronize Et</button>
                 </div>
             </div>
         </div>
     </div>
     
+    <div id="rejection-modal" class="fixed inset-0 items-center justify-center hidden modal-backdrop z-50">
+        <div class="card w-full max-w-md p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Talebi Reddet</h2>
+            <p class="text-gray-300 mb-4">Oyuncunun nedenini görebilmesi için bir red sebebi girin.</p>
+            <textarea id="rejection-reason" rows="3" class="form-textarea w-full p-2 rounded-md mb-4" placeholder="Örn: Ekran görüntüsü okunaklı değil."></textarea>
+            <div class="flex justify-end gap-4">
+                <button id="cancel-rejection" class="px-4 py-2 rounded-md">İptal</button>
+                <button id="confirm-rejection" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700">Reddet</button>
+            </div>
+        </div>
+    </div>
+
     <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AYARLAR ---
-        const ADMIN_PASSWORD = "166516"; // <-- ÖNEMLİ: Burayı kendi şifrenle değiştir!
-        const CLAN_TAX_PERCENT = 0.05; // %5 Klan vergisi. İstemiyorsan 0 yap.
-        const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA"; // Guild ID'si buraya sabitlendi.
+        const ADMIN_PASSWORD = "166516";
+        const CLAN_TAX_PERCENT = 0.05;
+        const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
 
-        // --- FIREBASE YAPILANDIRMASI ---
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
           authDomain: "bank-8738a.firebaseapp.com",
@@ -83,18 +142,24 @@
         const appId = firebaseConfig.appId || 'default-albion-app'; 
 
         let app, auth, db;
+        
         const adminLoginView = document.getElementById('admin-login-view');
         const adminDashboardView = document.getElementById('admin-dashboard-view');
         const notification = document.getElementById('notification');
+        const tabs = document.querySelectorAll('.tab-button');
+        const contents = document.querySelectorAll('.tab-content');
+        const rejectionModal = document.getElementById('rejection-modal');
+        let rejectionInfo = {};
 
+        // --- TEMEL FONKSİYONLAR ---
         function showNotification(message, isError = false) {
             notification.textContent = message;
             notification.classList.toggle('bg-red-500', isError);
             notification.classList.toggle('bg-green-500', !isError);
             notification.classList.remove('hidden');
-            setTimeout(() => notification.classList.add('hidden'), 3000);
+            setTimeout(() => notification.classList.add('hidden'), 4000);
         }
-        
+
         document.getElementById('admin-login-form').addEventListener('submit', (e) => {
             e.preventDefault();
             if (document.getElementById('admin-password').value === ADMIN_PASSWORD) {
@@ -107,70 +172,31 @@
 
         document.getElementById('admin-logout-button').addEventListener('click', () => {
             sessionStorage.removeItem('isAdminAuthenticated');
-            showLogin();
+            window.location.reload();
+        });
+        
+        // --- İSTEK YÖNETİMİ ---
+        window.openRejectionModal = (collectionName, id) => {
+            rejectionInfo = { collectionName, id };
+            rejectionModal.classList.remove('hidden');
+        };
+        
+        document.getElementById('cancel-rejection').addEventListener('click', () => {
+             rejectionModal.classList.add('hidden');
         });
 
-        function showLogin() {
-            adminLoginView.classList.remove('hidden');
-            adminDashboardView.classList.add('hidden');
-        }
+        document.getElementById('confirm-rejection').addEventListener('click', async () => {
+            const reason = document.getElementById('rejection-reason').value.trim();
+            if (!reason) return showNotification("Lütfen bir red sebebi girin.", true);
 
-        function showDashboard() {
-            adminLoginView.classList.add('hidden');
-            adminDashboardView.classList.remove('hidden');
-            listenToRequests();
-        }
-
-        function listenToRequests() {
-            const renderRequests = (listEl, emptyText, querySnapshot) => {
-                if (querySnapshot.empty) {
-                    listEl.innerHTML = `<p class="p-8 text-center text-gray-400">${emptyText}</p>`;
-                    return;
-                }
-                listEl.innerHTML = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    const id = doc.id;
-                    const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
-                    
-                    if (data.submitterName) { // Deposit
-                        // GÖRSEL GÖRÜNTÜLEME LİNKİ EKLENDİ
-                        const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
-                        
-                        return `
-                        <div class="card rounded-lg p-4" id="deposit-${id}">
-                            <p class="text-xs text-gray-400">${date}</p>
-                            <p>Talebi Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
-                            <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
-                            ${screenshotLink}
-                            <div class="my-4">
-                                <label class="block text-sm">Toplam Satış Tutarı (Silver)</label>
-                                <input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000">
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-approve">Onayla</button>
-                                <button onclick="window.rejectRequest('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-reject">Reddet</button>
-                            </div>
-                        </div>`;
-                    } else { // Withdrawal
-                        return `
-                        <div class="card rounded-lg p-4" id="withdraw-${id}">
-                            <p class="text-xs text-gray-400">${date}</p>
-                            <p>Talebi Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p>
-                            <p class="text-lg font-bold my-2">${data.amount.toLocaleString('tr-TR')} Silver</p>
-                            <div class="flex gap-2">
-                                <button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-approve">Onayla (Ödendi)</button>
-                                <button onclick="window.rejectRequest('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-reject">Reddet</button>
-                            </div>
-                        </div>`;
-                    }
-                }).join('');
-            };
-            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "pending"));
-            onSnapshot(depositsQuery, (snapshot) => renderRequests(document.getElementById('deposit-requests-list'), 'Bekleyen loot talebi yok.', snapshot));
-
-            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "pending"));
-            onSnapshot(withdrawalsQuery, (snapshot) => renderRequests(document.getElementById('withdraw-requests-list'), 'Bekleyen çekim talebi yok.', snapshot));
-        }
+            const { collectionName, id } = rejectionInfo;
+            const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
+            await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason }).commit();
+            
+            showNotification("Talep reddedildi.");
+            rejectionModal.classList.add('hidden');
+            document.getElementById('rejection-reason').value = '';
+        });
 
         window.approveDeposit = async (id) => {
             const totalSilver = parseInt(document.getElementById(`amount-${id}`).value);
@@ -198,11 +224,7 @@
                         transaction.update(userDoc.ref, { balance: (userDoc.data().balance || 0) + amountPerMember });
                     });
                     
-                    transaction.set(doc(collection(db, `artifacts/${appId}/public/data/transactions`)), {
-                        type: 'deposit', description: `Loot satışı`, amount: amountPerMember,
-                        involvedMembers: data.partyMembers, timestamp: serverTimestamp()
-                    });
-                    transaction.update(depositRef, { status: 'completed', processedAmount: totalSilver });
+                    transaction.update(depositRef, { status: 'completed', processedAmount: totalSilver, processedAt: serverTimestamp() });
                 });
                 showNotification("Loot satışı onaylandı.");
             } catch (e) {
@@ -224,11 +246,7 @@
                     if (!userDoc.exists() || userDoc.data().balance < data.amount) throw new Error("Kullanıcı bulunamadı veya bakiye yetersiz.");
 
                     transaction.update(userRef, { balance: userDoc.data().balance - data.amount });
-                    transaction.set(doc(collection(db, `artifacts/${appId}/public/data/transactions`)), {
-                        type: 'withdraw', description: 'Nakit çekim', amount: -data.amount,
-                        involvedMembers: [data.requesterName], timestamp: serverTimestamp()
-                    });
-                    transaction.update(withdrawRef, { status: 'completed' });
+                    transaction.update(withdrawRef, { status: 'completed', processedAt: serverTimestamp() });
                 });
                 showNotification("Çekim talebi onaylandı.");
             } catch (e) {
@@ -237,56 +255,212 @@
             }
         };
         
-        window.rejectRequest = async (collectionName, id) => {
-            if (!confirm("Bu talebi reddetmek istediğinizden emin misiniz?")) return;
-            const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
-            await writeBatch(db).update(ref, { status: 'rejected' }).commit();
-            showNotification("Talep reddedildi.");
-        };
+        // --- GÖSTERGE PANELİ (DASHBOARD) ---
+        function showDashboard() {
+            adminLoginView.classList.add('hidden');
+            adminDashboardView.classList.remove('hidden');
+            listenToRequests();
+            setupTabs();
+            document.querySelector('.tab-button[data-tab="requests"]').click();
+        }
 
+        function setupTabs() {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(item => item.classList.remove('active'));
+                    tab.classList.add('active');
+                    const target = tab.dataset.tab;
+                    contents.forEach(content => {
+                        if (content.id === `${target}-content`) {
+                            content.classList.remove('hidden');
+                            if (target === 'reports') loadReportsData();
+                            if (target === 'history') loadHistoryData();
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+            document.getElementById('history-search-name').addEventListener('input', () => loadHistoryData());
+            document.getElementById('history-search-date').addEventListener('change', () => loadHistoryData());
+        }
+        
+        // --- VERİ ÇEKME VE GÖSTERME ---
+        function listenToRequests() {
+            const renderRequests = (listEl, querySnapshot, type) => {
+                 if (querySnapshot.empty) {
+                    listEl.innerHTML = `<p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p>`;
+                    return;
+                }
+                listEl.innerHTML = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
+                    
+                    if (type === 'deposit') {
+                        const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
+                        return `<div class="card rounded-lg p-4">
+                            <p class="text-xs text-gray-400">${date}</p>
+                            <p>Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
+                            <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
+                            ${screenshotLink}
+                            <div class="my-4">
+                                <label class="block text-sm">Toplam Satış Tutarı</label>
+                                <input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla</button>
+                                <button onclick="window.openRejectionModal('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button>
+                            </div>
+                        </div>`;
+                    } else { // Withdrawal
+                        return `<div class="card rounded-lg p-4">
+                            <p class="text-xs text-gray-400">${date}</p>
+                            <p>Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p>
+                            <p class="text-lg font-bold my-2">${data.amount.toLocaleString('tr-TR')} Silver</p>
+                            <div class="flex gap-2">
+                                <button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla (Ödendi)</button>
+                                <button onclick="window.openRejectionModal('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button>
+                            </div>
+                        </div>`;
+                    }
+                }).join('');
+            };
+            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "pending"));
+            onSnapshot(depositsQuery, (snapshot) => renderRequests(document.getElementById('deposit-requests-list'), snapshot, 'deposit'));
+
+            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "pending"));
+            onSnapshot(withdrawalsQuery, (snapshot) => renderRequests(document.getElementById('withdraw-requests-list'), snapshot, 'withdraw'));
+        }
+
+        async function loadHistoryData() {
+            const nameFilter = document.getElementById('history-search-name').value.toLowerCase();
+            const dateFilter = document.getElementById('history-search-date').value;
+
+            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "!=", "pending"), orderBy("status"), orderBy("processedAt", "desc"));
+            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "!=", "pending"), orderBy("status"), orderBy("processedAt", "desc"));
+
+            const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
+            
+            let allHistory = [
+                ...depositsSnapshot.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
+                ...withdrawalsSnapshot.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
+            ].sort((a, b) => (b.processedAt || b.submittedAt).toDate() - (a.processedAt || a.submittedAt).toDate());
+
+            if (nameFilter) {
+                allHistory = allHistory.filter(item => (item.submitterName || item.requesterName).toLowerCase().includes(nameFilter));
+            }
+            if (dateFilter) {
+                allHistory = allHistory.filter(item => {
+                    const itemDate = (item.processedAt || item.submittedAt).toDate().toISOString().split('T')[0];
+                    return itemDate === dateFilter;
+                });
+            }
+
+            const historyListEl = document.getElementById('history-list');
+            if (allHistory.length === 0) {
+                historyListEl.innerHTML = '<p class="p-8 text-center text-gray-400">Filtreye uygun kayıt bulunamadı.</p>';
+                return;
+            }
+            historyListEl.innerHTML = allHistory.map(item => {
+                const date = (item.processedAt || item.submittedAt).toDate().toLocaleString('tr-TR');
+                const isDeposit = item.type === 'Loot Yatırma';
+                const name = isDeposit ? item.submitterName : item.requesterName;
+                const amount = isDeposit ? item.processedAmount : item.amount;
+                const statusClass = item.status === 'completed' ? 'text-green-400' : 'text-red-400';
+                const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-gray-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
+                return `
+                    <div class="card p-3 rounded-md">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>
+                                <p class="text-sm ${statusClass}">${amount.toLocaleString('tr-TR')} Silver</p>
+                                ${reasonHtml}
+                            </div>
+                            <p class="text-xs text-gray-400">${date}</p>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function loadReportsData() {
+            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "completed"));
+            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "completed"));
+
+            const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
+
+            const now = new Date();
+            const todayStart = new Date(now.setHours(0, 0, 0, 0));
+            const weekAgo = new Date(now.setDate(now.getDate() - 7));
+
+            let totalVolume = 0, weeklyVolume = 0, dailyVolume = 0;
+            const depositors = {}, withdrawers = {};
+
+            depositsSnapshot.docs.forEach(doc => {
+                const data = doc.data();
+                const amount = data.processedAmount || 0;
+                totalVolume += amount;
+                if (data.processedAt.toDate() >= weekAgo) weeklyVolume += amount;
+                if (data.processedAt.toDate() >= todayStart) dailyVolume += amount;
+                
+                data.partyMembers.forEach(name => {
+                    depositors[name] = (depositors[name] || 0) + (amount / data.partyMembers.length);
+                });
+            });
+
+            withdrawalsSnapshot.docs.forEach(doc => {
+                const data = doc.data();
+                const name = data.requesterName;
+                withdrawers[name] = (withdrawers[name] || 0) + data.amount;
+            });
+            
+            document.getElementById('total-volume').textContent = totalVolume.toLocaleString('tr-TR');
+            document.getElementById('weekly-volume').textContent = weeklyVolume.toLocaleString('tr-TR');
+            document.getElementById('daily-volume').textContent = dailyVolume.toLocaleString('tr-TR');
+            
+            const renderTopList = (el, data, topN = 5) => {
+                const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN);
+                if (sorted.length === 0) return;
+                el.innerHTML = sorted.map(([name, amount]) => `
+                    <div class="flex justify-between text-sm">
+                        <p>${name}</p>
+                        <p class="font-semibold text-gray-300">${Math.floor(amount).toLocaleString('tr-TR')}</p>
+                    </div>`).join('');
+            };
+            
+            renderTopList(document.getElementById('top-depositors'), depositors);
+            renderTopList(document.getElementById('top-withdrawers'), withdrawers);
+        }
+
+        // --- GUILD YÖNETİMİ ---
         document.getElementById('update-guild-members-button').addEventListener('click', async () => {
             const button = document.getElementById('update-guild-members-button');
             button.disabled = true;
             button.textContent = "Güncelleniyor...";
-            
             try {
-                // HATA DÜZELTMESİ: Tarayıcı güvenlik (CORS) hatasını aşmak için bir proxy kullanıyoruz.
                 const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
                 const response = await fetch(proxyUrl);
-
                 if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`);
-                
                 const members = await response.json();
                 if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası.");
                 
                 const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
                 const batch = writeBatch(db);
                 let newMemberCount = 0;
-
                 for (const member of members) {
                     const memberNameLower = member.Name.toLowerCase();
                     const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower));
                     const snapshot = await getDocs(q);
-
                     if (snapshot.empty) {
                         const newUserRef = doc(usersRef);
-                        batch.set(newUserRef, {
-                            inGameName: member.Name,
-                            inGameName_lowercase: memberNameLower,
-                            balance: 0,
-                            isRegistered: false,
-                            createdAt: serverTimestamp()
-                        });
+                        batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() });
                         newMemberCount++;
                     }
                 }
-
                 await batch.commit();
-                showNotification(`${newMemberCount} yeni üye başarıyla veritabanına eklendi. Toplam ${members.length} üye güncel.`);
-
+                showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`);
             } catch (error) {
-                console.error("Guild update error:", error);
                 showNotification(`Hata: ${error.message}`, true);
             } finally {
                  button.disabled = false;
@@ -294,18 +468,16 @@
             }
         });
         
+        // --- UYGULAMA BAŞLANGICI ---
         async function initializeAppAndAuth() {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-            try {
-                await signInAnonymously(auth);
-            } catch (error) { console.error("Admin auth error", error); }
-            
-            if (sessionStorage.getItem('isAdminAuthenticated') === 'true') showDashboard();
-            else showLogin();
+            try { await signInAnonymously(auth); } catch (error) { console.error("Admin auth error", error); }
+            if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+                showDashboard();
+            }
         }
-
         initializeAppAndAuth();
     </script>
 </body>
