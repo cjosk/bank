@@ -489,7 +489,7 @@
             if (docSnap.exists() && docSnap.data().taxRate !== undefined) {
                 guildSettings = docSnap.data();
             }
-            const purchaseRate = (1 - guildSettings.taxRate) * 100;
+            const purchaseRate = Math.round((1 - guildSettings.taxRate) * 100);
             document.getElementById('purchase-rate-input').value = purchaseRate;
         }
 
