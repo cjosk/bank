@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div id="dashboard-view" class="hidden w-full max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
+        <div id="dashboard-view" class="hidden w-full max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
             <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 pb-4 border-b border-gray-700">
                 <div>
                     <p class="text-sm text-gray-400">Hoş Geldin,</p>
@@ -52,34 +52,71 @@
             </div>
 
             <div id="action-content">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div id="deposit-form-container" class="card p-6 rounded-lg">
-                        <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
-                        <form id="deposit-form">
-                            <div class="mb-4">
-                                <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
-                                <textarea id="party-members" rows="3" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium mb-1 text-gray-300">Ekran Görüntüsü</label>
-                                <div id="file-drop-area" class="file-drop-area rounded-md p-6 text-center cursor-pointer">
-                                    <p id="file-info" class="text-gray-400">Görseli buraya sürükle veya seçmek için tıkla</p>
-                                    <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-8">
+                        <div id="deposit-form-container" class="card p-6 rounded-lg">
+                            <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
+                            <form id="deposit-form" class="space-y-4">
+                                <div>
+                                    <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
+                                    <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
                                 </div>
-                            </div>
-                            <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Talebi Gönder</button>
-                        </form>
-                    </div>
+                                <div>
+                                    <label for="repair-cost" class="block text-sm font-medium mb-1 text-gray-300">Toplam Tamir Masrafı (Repair Cost)</label>
+                                    <input type="number" id="repair-cost" placeholder="Örn: 150000" class="form-input w-full p-2 rounded-md" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1 text-gray-300">Ekran Görüntüsü</label>
+                                    <div id="file-drop-area" class="file-drop-area rounded-md p-6 text-center cursor-pointer">
+                                        <p id="file-info" class="text-gray-400">Görseli buraya sürükle veya seçmek için tıkla</p>
+                                        <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                                    </div>
+                                </div>
+                                <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Loot Yatırma Talebi Gönder</button>
+                            </form>
+                        </div>
 
+                         <div class="card p-6 rounded-lg">
+                            <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
+                            <form id="withdraw-form">
+                                <div class="mb-4">
+                                     <label for="withdraw-amount" class="block text-sm font-medium mb-1 text-gray-300">Çekilecek Tutar</label>
+                                    <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 rounded-md" required>
+                                </div>
+                                <button type="submit" class="w-full py-2 rounded-md font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
+                            </form>
+                        </div>
+                    </div>
                     <div class="card p-6 rounded-lg">
-                        <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
-                        <form id="withdraw-form">
-                            <div class="mb-4">
-                                 <label for="withdraw-amount" class="block text-sm font-medium mb-1 text-gray-300">Çekilecek Tutar</label>
-                                <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 rounded-md" required>
+                        <h2 class="text-xl font-bold mb-4">Örnek Satış Hesaplayıcı</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="calc-total-value" class="block text-sm font-medium text-gray-300">Tahmini Toplam Satış Tutarı</label>
+                                <input type="number" id="calc-total-value" class="form-input w-full p-2 rounded-md mt-1" placeholder="10000000">
                             </div>
-                            <button type="submit" class="w-full py-2 rounded-md font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
-                        </form>
+                            <div>
+                                <label for="calc-repair-cost" class="block text-sm font-medium text-gray-300">Toplam Tamir Masrafı</label>
+                                <input type="number" id="calc-repair-cost" class="form-input w-full p-2 rounded-md mt-1" placeholder="150000">
+                            </div>
+                            <div>
+                                <label for="calc-party-count" class="block text-sm font-medium text-gray-300">Parti Üye Sayısı</label>
+                                <input type="number" id="calc-party-count" class="form-input w-full p-2 rounded-md mt-1" placeholder="5">
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-gray-600 space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Vergi Öncesi Net Tutar:</span>
+                                <span id="calc-pre-tax" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Guild Vergisi (<span id="calc-tax-rate-display">%20</span>):</span>
+                                <span id="calc-tax-amount" class="font-medium text-red-400">- 0</span>
+                            </div>
+                             <div class="flex justify-between text-lg font-bold mt-2">
+                                <span class="text-white">Oyuncu Başına Düşen:</span>
+                                <span id="calc-net-payout" class="text-green-400">0 Silver</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -90,7 +127,6 @@
                     <p class="text-center text-gray-400">Henüz bir işlem yapmadınız.</p>
                  </div>
             </div>
-
         </div>
     </div>
     
@@ -98,8 +134,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -116,6 +152,7 @@
 
         let app, auth, db, storage;
         let currentUser = null;
+        let guildSettings = { taxRate: 0.20 }; // Varsayılan
 
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
@@ -149,11 +186,13 @@
             showDashboard();
         }
 
-        function showDashboard() {
+        async function showDashboard() {
             loginView.classList.add('hidden');
             dashboardView.classList.remove('hidden');
             document.getElementById('player-name').textContent = currentUser.inGameName;
             
+            await loadGuildSettings();
+
             const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
             onSnapshot(userRef, (doc) => {
                 if(doc.exists()){
@@ -177,6 +216,7 @@
             const fileInput = document.getElementById('screenshot-file');
             const file = fileInput.files[0];
             const partyMembers = document.getElementById('party-members').value.split(',').map(m => m.trim()).filter(m => m);
+            const repairCost = parseInt(document.getElementById('repair-cost').value) || 0;
 
             if (partyMembers.length === 0) return showNotification("Parti üyelerini girin.", true);
             if (!file) return showNotification("Ekran görüntüsü seçin.", true);
@@ -197,6 +237,7 @@
                     submitterId: currentUser.id,
                     submitterName: currentUser.inGameName,
                     partyMembers: partyMembers,
+                    repairCost: repairCost,
                     imageUrl: imageUrl,
                     status: 'pending',
                     submittedAt: serverTimestamp()
@@ -210,7 +251,7 @@
                 showNotification("Talep gönderilirken hata oluştu.", true);
             } finally {
                 button.disabled = false;
-                button.textContent = "Talebi Gönder";
+                button.textContent = "Loot Yatırma Talebi Gönder";
             }
         });
 
@@ -233,46 +274,40 @@
         });
 
         function listenToUserHistory() {
-            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id), orderBy("submittedAt", "desc"), limit(20));
-            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id), orderBy("requestedAt", "desc"), limit(20));
-
             const historyListEl = document.getElementById('user-history-list');
-            
-            const unsubDeposits = onSnapshot(depositsQuery, () => renderHistory());
-            const unsubWithdrawals = onSnapshot(withdrawalsQuery, () => renderHistory());
-
-            async function renderHistory() {
-                const depositsSnapshot = await getDocs(depositsQuery);
-                const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
-
+            const renderHistory = async () => {
+                const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
+                const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
+                const depositsQuery = query(depositsRef, where("submitterId", "==", currentUser.id));
+                const withdrawalsQuery = query(withdrawalsRef, where("requesterId", "==", currentUser.id));
+                const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([ getDocs(depositsQuery), getDocs(withdrawalsQuery) ]);
                 const deposits = depositsSnapshot.docs.map(doc => ({ type: 'Loot Yatırma', ...doc.data() }));
                 const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ type: 'Silver Çekim', ...doc.data() }));
-
-                const allHistory = [...deposits, ...withdrawals]
-                    .sort((a, b) => (b.submittedAt || b.requestedAt).toDate() - (a.submittedAt || a.requestedAt).toDate());
-                
+                const allHistory = [...deposits, ...withdrawals].sort((a, b) => {
+                    const dateA = a.processedAt || a.submittedAt || a.requestedAt;
+                    const dateB = b.processedAt || b.submittedAt || b.requestedAt;
+                    if (!dateA || !dateB) return 0;
+                    return dateB.toDate() - a.toDate();
+                });
                 if (allHistory.length === 0) {
                     historyListEl.innerHTML = `<p class="text-center text-gray-400">Henüz bir işlem yapmadınız.</p>`;
                     return;
                 }
-
                 historyListEl.innerHTML = allHistory.map(item => {
-                    const date = (item.submittedAt || item.requestedAt).toDate().toLocaleString('tr-TR');
+                    const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
                     let statusClass, statusText;
                     switch (item.status) {
                         case 'completed': statusClass = 'bg-green-500'; statusText = 'Onaylandı'; break;
                         case 'rejected': statusClass = 'bg-red-500'; statusText = 'Reddedildi'; break;
                         default: statusClass = 'bg-yellow-500'; statusText = 'Beklemede';
                     }
-                    const reasonHtml = item.status === 'rejected' && item.rejectionReason 
-                        ? `<p class="text-xs text-red-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
-
+                    const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
                     return `
                         <div class="card p-4 rounded-md">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <p class="font-bold">${item.type}</p>
-                                    <p class="text-sm text-gray-300">${item.type === 'Silver Çekim' ? item.amount.toLocaleString('tr-TR') + ' Silver' : 'Parti: ' + item.partyMembers.join(', ')}</p>
+                                    <p class="text-sm text-gray-300">${item.type === 'Silver Çekim' ? (item.amount || 0).toLocaleString('tr-TR') + ' Silver' : 'Parti: ' + (item.partyMembers || []).join(', ')}</p>
                                     ${reasonHtml}
                                 </div>
                                 <div class="text-right">
@@ -282,31 +317,56 @@
                             </div>
                         </div>`;
                 }).join('');
+            };
+            onSnapshot(query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id)), renderHistory);
+            onSnapshot(query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id)), renderHistory);
+        }
+        
+        // --- YENİ BÖLÜM: HESAP MAKİNESİ ---
+        const calcInputs = ['calc-total-value', 'calc-repair-cost', 'calc-party-count'];
+        calcInputs.forEach(id => document.getElementById(id).addEventListener('input', calculatePayout));
+        
+        function calculatePayout() {
+            const totalValue = parseInt(document.getElementById('calc-total-value').value) || 0;
+            const repairCost = parseInt(document.getElementById('calc-repair-cost').value) || 0;
+            const partyCount = parseInt(document.getElementById('calc-party-count').value) || 1;
+            
+            const preTax = totalValue - repairCost;
+            const taxAmount = preTax > 0 ? preTax * guildSettings.taxRate : 0;
+            const finalAmount = preTax - taxAmount;
+            const perPlayer = partyCount > 0 ? finalAmount / partyCount : 0;
+            
+            document.getElementById('calc-pre-tax').textContent = preTax.toLocaleString('tr-TR');
+            document.getElementById('calc-tax-amount').textContent = `- ${Math.floor(taxAmount).toLocaleString('tr-TR')}`;
+            document.getElementById('calc-net-payout').textContent = `${Math.floor(perPlayer).toLocaleString('tr-TR')} Silver`;
+        }
+        
+        async function loadGuildSettings() {
+            const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists()) {
+                guildSettings = docSnap.data();
             }
+            document.getElementById('calc-tax-rate-display').textContent = `%${guildSettings.taxRate * 100}`;
+            calculatePayout(); // Ayarlar yüklenince hesaplayıcıyı güncelle
         }
 
+        // --- DİĞER FONKSİYONLAR ---
         tabAction.addEventListener('click', () => {
-            tabAction.classList.add('active');
-            tabHistory.classList.remove('active');
-            actionContent.classList.remove('hidden');
-            historyContent.classList.add('hidden');
+            tabAction.classList.add('active'); tabHistory.classList.remove('active');
+            actionContent.classList.remove('hidden'); historyContent.classList.add('hidden');
         });
         tabHistory.addEventListener('click', () => {
-            tabHistory.classList.add('active');
-            tabAction.classList.remove('active');
-            historyContent.classList.remove('hidden');
-            actionContent.classList.add('hidden');
+            tabHistory.classList.add('active'); tabAction.classList.remove('active');
+            historyContent.classList.remove('hidden'); actionContent.classList.add('hidden');
         });
-
         const dropArea = document.getElementById('file-drop-area');
         const fileInput = document.getElementById('screenshot-file');
         const fileInfo = document.getElementById('file-info');
-
         dropArea.addEventListener('click', () => fileInput.click());
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }));
         ['dragenter', 'dragover'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight')));
         ['dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight')));
-
         dropArea.addEventListener('drop', (e) => {
             fileInput.files = e.dataTransfer.files;
             fileInfo.textContent = fileInput.files[0].name;
@@ -329,7 +389,6 @@
                 }
             } catch (error) { console.error("Auth error", error); }
         }
-
         initializeAppAndAuth();
     </script>
 </body>
