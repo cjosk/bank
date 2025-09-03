@@ -72,21 +72,38 @@
                  <h2 class="text-2xl font-bold text-white mb-4">Genel Raporlar</h2>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <div class="card p-4 rounded-lg text-center">
-                        <p class="text-sm text-gray-400">Toplam Satış Hacmi</p>
-                        <p id="total-volume" class="text-2xl font-bold">0</p>
+                        <p class="text-sm text-gray-400">Yatırılan Toplam Loot</p>
+                        <p id="total-deposited-value" class="text-2xl font-bold">0</p>
                     </div>
                     <div class="card p-4 rounded-lg text-center">
-                        <p class="text-sm text-gray-400">Haftalık Satış (Son 7 Gün)</p>
-                        <p id="weekly-volume" class="text-2xl font-bold">0</p>
+                        <p class="text-sm text-gray-400">Toplam Tamir Masrafı</p>
+                        <p id="total-repair-cost" class="text-2xl font-bold">0</p>
                     </div>
                      <div class="card p-4 rounded-lg text-center">
-                        <p class="text-sm text-gray-400">Günlük Satış (Bugün)</p>
-                        <p id="daily-volume" class="text-2xl font-bold">0</p>
+                        <p class="text-sm text-gray-400">Toplam Guild Kârı</p>
+                        <p id="total-guild-profit" class="text-2xl font-bold text-green-400">0</p>
                     </div>
                  </div>
+
+                 <h2 class="text-2xl font-bold text-white mb-4">Kâr Analizi</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Günlük Kâr (Bugün)</p>
+                        <p id="daily-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Haftalık Kâr (Son 7 Gün)</p>
+                        <p id="weekly-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                     <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Aylık Kâr (Son 30 Gün)</p>
+                        <p id="monthly-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                 </div>
+
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                        <h3 class="text-xl font-bold mb-2">En Çok Loot Yatıranlar</h3>
+                        <h3 class="text-xl font-bold mb-2">En Çok Loot Yatıranlar (Net Kazanç)</h3>
                         <div id="top-depositors" class="space-y-2"><p class="text-center text-gray-400">Veri yok.</p></div>
                     </div>
                      <div>
@@ -408,18 +425,29 @@
                 const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
                 const isDeposit = item.type === 'Loot Yatırma';
                 const name = isDeposit ? item.submitterName : item.requesterName;
-                const amount = isDeposit ? item.processedAmount : item.amount;
                 const statusClass = item.status === 'completed' ? 'text-green-400' : 'text-red-400';
                 const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-gray-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
+                
+                let detailsHtml = '';
+                if (isDeposit) {
+                    const processedAmountText = `Gerçekleşen Satış: <span class="font-semibold text-green-400">${formatSilver(item.processedAmount || 0)}</span>`;
+                    const repairCostText = `Tamir: <span class="font-semibold text-red-400">${formatSilver(item.repairCost || 0)}</span>`;
+                    const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-indigo-400 hover:underline">Görsel</a>` : '';
+                    detailsHtml = `<div class="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-4 gap-y-1">${processedAmountText} | ${repairCostText} | ${screenshotLink}</div>`;
+                } else {
+                     const amount = item.amount || 0;
+                     detailsHtml = `<p class="text-sm ${statusClass}">${formatSilver(amount)} Silver</p>`;
+                }
+
                 return `
                     <div class="card p-3 rounded-md">
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-start">
                             <div>
                                 <p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>
-                                <p class="text-sm ${statusClass}">${formatSilver(amount || 0)} Silver</p>
+                                ${detailsHtml}
                                 ${reasonHtml}
                             </div>
-                            <p class="text-xs text-gray-400">${date}</p>
+                            <p class="text-xs text-gray-400 text-right flex-shrink-0 ml-4">${date}</p>
                         </div>
                     </div>`;
             }).join('');
@@ -431,25 +459,35 @@
 
             const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
 
+            const now = new Date();
             const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
-            const weekAgo = new Date(new Date().setDate(new Date().getDate() - 7));
+            const weekAgo = new Date(new Date().setDate(now.getDate() - 7));
+            const monthAgo = new Date(new Date().setDate(now.getDate() - 30));
             
-            let totalVolume = 0, weeklyVolume = 0, dailyVolume = 0;
+            let totalDepositedValue = 0, totalRepairCost = 0, totalGuildProfit = 0;
+            let dailyProfit = 0, weeklyProfit = 0, monthlyProfit = 0;
             const depositors = {}, withdrawers = {};
 
             depositsSnapshot.docs.forEach(doc => {
                 const data = doc.data();
                 if (!data.processedAt) return; 
+                
                 const amount = data.processedAmount || 0;
                 const repairCost = data.repairCost || 0;
                 const netLootValue = amount - repairCost;
                 const processedDate = data.processedAt.toDate();
+                const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0;
 
-                totalVolume += amount;
-                if (processedDate >= weekAgo) weeklyVolume += amount;
-                if (processedDate >= todayStart) dailyVolume += amount;
+                totalDepositedValue += amount;
+                totalRepairCost += repairCost;
+                totalGuildProfit += guildProfit;
+
+                if (processedDate >= todayStart) dailyProfit += guildProfit;
+                if (processedDate >= weekAgo) weeklyProfit += guildProfit;
+                if (processedDate >= monthAgo) monthlyProfit += guildProfit;
                 
-                const amountPerMember = netLootValue > 0 ? (netLootValue * (1 - guildSettings.taxRate)) / data.partyMembers.length : 0;
+                const amountToPlayers = netLootValue > 0 ? netLootValue * (1 - guildSettings.taxRate) : 0;
+                const amountPerMember = amountToPlayers / data.partyMembers.length;
                 data.partyMembers.forEach(name => {
                     depositors[name] = (depositors[name] || 0) + amountPerMember;
                 });
@@ -461,10 +499,14 @@
                 withdrawers[name] = (withdrawers[name] || 0) + data.amount;
             });
             
-            document.getElementById('total-volume').textContent = formatSilver(totalVolume);
-            document.getElementById('weekly-volume').textContent = formatSilver(weeklyVolume);
-            document.getElementById('daily-volume').textContent = formatSilver(dailyVolume);
+            document.getElementById('total-deposited-value').textContent = formatSilver(totalDepositedValue);
+            document.getElementById('total-repair-cost').textContent = formatSilver(totalRepairCost);
+            document.getElementById('total-guild-profit').textContent = formatSilver(totalGuildProfit);
             
+            document.getElementById('daily-profit').textContent = formatSilver(dailyProfit);
+            document.getElementById('weekly-profit').textContent = formatSilver(weeklyProfit);
+            document.getElementById('monthly-profit').textContent = formatSilver(monthlyProfit);
+
             const renderTopList = (el, data, topN = 5) => {
                 const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN);
                 if (sorted.length === 0) {
@@ -498,7 +540,7 @@
             if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) {
                 return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true);
             }
-            const taxRate = 1 - (purchaseRate / 100);
+            const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15));
             const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
             await setDoc(settingsRef, { taxRate: taxRate }, { merge: true });
             await loadGuildSettings();
