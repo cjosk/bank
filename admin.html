@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klan Kasası - Admin Paneli</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
+        .form-input { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
+        .btn-approve { background-color: #38a169; }
+        .btn-approve:hover { background-color: #2f855a; }
+        .btn-reject { background-color: #e53e3e; }
+        .btn-reject:hover { background-color: #c53030; }
+        .card { background-color: #2d3748; border: 1px solid #4a5568; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="admin-app" class="min-h-screen p-4 sm:p-6 md:p-8">
+        <div id="admin-login-view" class="flex items-center justify-center min-h-screen">
+            <div class="w-full max-w-sm card p-8 rounded-lg shadow-lg text-center">
+                <h1 class="text-2xl font-bold text-white mb-2">Admin Paneli Girişi</h1>
+                <p class="text-gray-400 mb-6">Lütfen yönetici şifresini girin.</p>
+                <form id="admin-login-form">
+                    <input id="admin-password" type="password" placeholder="Yönetici Şifresi" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
+                    <button type="submit" class="w-full py-3 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Giriş Yap</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="admin-dashboard-view" class="hidden w-full max-w-7xl mx-auto">
+            <header class="flex justify-between items-center mb-8 pb-4 border-b border-gray-700">
+                <h1 class="text-3xl font-bold text-white">Yönetici Paneli</h1>
+                <button id="admin-logout-button" class="px-4 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700">Çıkış Yap</button>
+            </header>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
+                    <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Çekim Talepleri</h2>
+                    <div id="withdraw-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- AYARLAR ---
+        const ADMIN_PASSWORD = "KLAN_SIFRESI_123"; // <-- ÖNEMLİ: Burayı kendi şifrenle değiştir!
+        const CLAN_TAX_PERCENT = 0.05; // %5 Klan vergisi. İstemiyorsan 0 yap.
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-albion-app';
+        let firebaseConfig;
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        } catch (e) { console.error("Firebase config error:", e); firebaseConfig = null; }
+
+        let app, auth, db;
+        const adminLoginView = document.getElementById('admin-login-view');
+        const adminDashboardView = document.getElementById('admin-dashboard-view');
+        const notification = document.getElementById('notification');
+
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.classList.toggle('bg-red-500', isError);
+            notification.classList.toggle('bg-green-500', !isError);
+            notification.classList.remove('hidden');
+            setTimeout(() => notification.classList.add('hidden'), 3000);
+        }
+        
+        document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (document.getElementById('admin-password').value === ADMIN_PASSWORD) {
+                sessionStorage.setItem('isAdminAuthenticated', 'true');
+                showDashboard();
+            } else {
+                showNotification("Yanlış şifre!", true);
+            }
+        });
+
+        document.getElementById('admin-logout-button').addEventListener('click', () => {
+            sessionStorage.removeItem('isAdminAuthenticated');
+            showLogin();
+        });
+
+        function showLogin() {
+            adminLoginView.classList.remove('hidden');
+            adminDashboardView.classList.add('hidden');
+        }
+
+        function showDashboard() {
+            adminLoginView.classList.add('hidden');
+            adminDashboardView.classList.remove('hidden');
+            listenToRequests();
+        }
+
+        function listenToRequests() {
+            const renderRequests = (listEl, emptyText, querySnapshot) => {
+                if (querySnapshot.empty) {
+                    listEl.innerHTML = `<p class="p-8 text-center text-gray-400">${emptyText}</p>`;
+                    return;
+                }
+                listEl.innerHTML = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
+                    
+                    if (data.submitterName) { // Deposit
+                        return `
+                        <div class="card rounded-lg p-4" id="deposit-${id}">
+                            <p class="text-xs text-gray-400">${date}</p>
+                            <p>Talebi Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
+                            <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
+                            <div class="my-4">
+                                <label class="block text-sm">Toplam Satış Tutarı (Silver)</label>
+                                <input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000">
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-approve">Onayla</button>
+                                <button onclick="window.rejectRequest('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-reject">Reddet</button>
+                            </div>
+                        </div>`;
+                    } else { // Withdrawal
+                        return `
+                        <div class="card rounded-lg p-4" id="withdraw-${id}">
+                            <p class="text-xs text-gray-400">${date}</p>
+                            <p>Talebi Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p>
+                            <p class="text-lg font-bold my-2">${data.amount.toLocaleString('tr-TR')} Silver</p>
+                            <div class="flex gap-2">
+                                <button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-approve">Onayla (Ödendi)</button>
+                                <button onclick="window.rejectRequest('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded btn-reject">Reddet</button>
+                            </div>
+                        </div>`;
+                    }
+                }).join('');
+            };
+            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "pending"));
+            onSnapshot(depositsQuery, (snapshot) => renderRequests(document.getElementById('deposit-requests-list'), 'Bekleyen loot talebi yok.', snapshot));
+
+            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "pending"));
+            onSnapshot(withdrawalsQuery, (snapshot) => renderRequests(document.getElementById('withdraw-requests-list'), 'Bekleyen çekim talebi yok.', snapshot));
+        }
+
+        window.approveDeposit = async (id) => {
+            const totalSilver = parseInt(document.getElementById(`amount-${id}`).value);
+            if (!totalSilver || totalSilver <= 0) return showNotification("Geçerli bir tutar girin.", true);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const depositRef = doc(db, `artifacts/${appId}/public/data/deposits`, id);
+                    const depositDoc = await transaction.get(depositRef);
+                    if (!depositDoc.exists()) throw new Error("Talep bulunamadı.");
+                    
+                    const data = depositDoc.data();
+                    const netAmount = totalSilver * (1 - CLAN_TAX_PERCENT);
+                    const amountPerMember = Math.floor(netAmount / data.partyMembers.length);
+
+                    const usersQuery = query(collection(db, `artifacts/${appId}/public/data/users`), where("inGameName", "in", data.partyMembers));
+                    const userDocsSnapshot = await getDocs(usersQuery);
+                    
+                    if (userDocsSnapshot.docs.length !== data.partyMembers.length) throw new Error("Parti üyelerinden bazıları sistemde kayıtlı değil.");
+
+                    userDocsSnapshot.docs.forEach(userDoc => {
+                        transaction.update(userDoc.ref, { balance: (userDoc.data().balance || 0) + amountPerMember });
+                    });
+                    
+                    transaction.set(doc(collection(db, `artifacts/${appId}/public/data/transactions`)), {
+                        type: 'deposit', description: `Loot satışı`, amount: amountPerMember,
+                        involvedMembers: data.partyMembers, timestamp: serverTimestamp()
+                    });
+                    transaction.update(depositRef, { status: 'completed', processedAmount: totalSilver });
+                });
+                showNotification("Loot satışı onaylandı.");
+            } catch (e) {
+                console.error("Deposit approval error:", e);
+                showNotification(`Hata: ${e.message}`, true);
+            }
+        };
+
+        window.approveWithdrawal = async (id) => {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const withdrawRef = doc(db, `artifacts/${appId}/public/data/withdrawals`, id);
+                    const withdrawDoc = await transaction.get(withdrawRef);
+                    if (!withdrawDoc.exists()) throw new Error("Talep bulunamadı.");
+
+                    const data = withdrawDoc.data();
+                    const userRef = doc(db, `artifacts/${appId}/public/data/users`, data.requesterId);
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists() || userDoc.data().balance < data.amount) throw new Error("Kullanıcı bulunamadı veya bakiye yetersiz.");
+
+                    transaction.update(userRef, { balance: userDoc.data().balance - data.amount });
+                    transaction.set(doc(collection(db, `artifacts/${appId}/public/data/transactions`)), {
+                        type: 'withdraw', description: 'Nakit çekim', amount: -data.amount,
+                        involvedMembers: [data.requesterName], timestamp: serverTimestamp()
+                    });
+                    transaction.update(withdrawRef, { status: 'completed' });
+                });
+                showNotification("Çekim talebi onaylandı.");
+            } catch (e) {
+                console.error("Withdrawal approval error:", e);
+                showNotification(`Hata: ${e.message}`, true);
+            }
+        };
+        
+        window.rejectRequest = async (collectionName, id) => {
+            if (!confirm("Bu talebi reddetmek istediğinizden emin misiniz?")) return;
+            const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
+            await writeBatch(db).update(ref, { status: 'rejected' }).commit();
+            showNotification("Talep reddedildi.");
+        };
+        
+        async function initializeAppAndAuth() {
+            if (!firebaseConfig) return showNotification("Firebase yapılandırması eksik!", true);
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) { console.error("Admin auth error", error); }
+            
+            if (sessionStorage.getItem('isAdminAuthenticated') === 'true') showDashboard();
+            else showLogin();
+        }
+
+        initializeAppAndAuth();
+    </script>
+</body>
+</html>
+
