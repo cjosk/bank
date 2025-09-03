@@ -53,18 +53,25 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AYARLAR ---
-        const ADMIN_PASSWORD = "166516"; // <-- ÖNEMLİ: Burayı kendi şifrenle değiştir!
+        const ADMIN_PASSWORD = "KLAN_SIFRESI_123"; // <-- ÖNEMLİ: Burayı kendi şifrenle değiştir!
         const CLAN_TAX_PERCENT = 0.05; // %5 Klan vergisi. İstemiyorsan 0 yap.
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-albion-app';
-        let firebaseConfig;
-        try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        } catch (e) { console.error("Firebase config error:", e); firebaseConfig = null; }
+        // --- FIREBASE YAPILANDIRMASI ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
+          authDomain: "bank-8738a.firebaseapp.com",
+          projectId: "bank-8738a",
+          storageBucket: "bank-8738a.firebasestorage.app",
+          messagingSenderId: "157747262596",
+          appId: "1:157747262596:web:1f60a45a33c0c5a702fed1",
+          measurementId: "G-T8Z3R2X6DJ"
+        };
+        
+        const appId = firebaseConfig.appId || 'default-albion-app'; 
 
         let app, auth, db;
         const adminLoginView = document.getElementById('admin-login-view');
@@ -221,16 +228,11 @@
         };
         
         async function initializeAppAndAuth() {
-            if (!firebaseConfig) return showNotification("Firebase yapılandırması eksik!", true);
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                await signInAnonymously(auth);
             } catch (error) { console.error("Admin auth error", error); }
             
             if (sessionStorage.getItem('isAdminAuthenticated') === 'true') showDashboard();
