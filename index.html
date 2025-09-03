@@ -3,110 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Albion Klan Kasası</title>
+    <title>Klan Kasası</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
         .form-input, .form-textarea { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
-        .form-input::placeholder, .form-textarea::placeholder { color: #a0aec0; }
-        .btn-primary { background-color: #4a5568; border: 1px solid #718096; transition: all 0.2s; }
-        .btn-primary:hover { background-color: #718096; border-color: #a0aec0; }
-        .btn-secondary { background-color: #2d3748; border: 1px solid #4a5568; }
-        .btn-secondary:hover { background-color: #4a5568; }
         .card { background-color: #2d3748; border: 1px solid #4a5568; }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
+        .btn-primary { background-color: #4f46e5; }
+        .btn-primary:hover { background-color: #4338ca; }
+        .file-drop-area { border: 2px dashed #4a5568; }
+        .file-drop-area.highlight { border-color: #a0aec0; background-color: #4a5568; }
     </style>
 </head>
 <body class="antialiased">
 
-    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4">
-        <div id="login-view" class="w-full max-w-md">
-            <div class="card p-8 rounded-lg shadow-lg text-center">
-                <h1 class="text-3xl font-bold text-white mb-2">Klan Kasası</h1>
-                <p class="text-gray-400 mb-6">Devam etmek için oyun-içi adınızı girin.</p>
+    <div id="player-app" class="min-h-screen">
+        <div id="login-view" class="flex items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-sm card p-8 rounded-lg shadow-lg text-center">
+                <h1 class="text-2xl font-bold text-white mb-2">Klan Kasasına Hoş Geldin</h1>
+                <p class="text-gray-400 mb-6">Lütfen oyundaki ismini girerek devam et.</p>
                 <form id="login-form">
-                    <input id="ingame-name-input" type="text" placeholder="Oyun-içi Adınız" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
-                    <button type="submit" class="btn-primary w-full py-3 rounded-md font-bold text-white">Giriş Yap</button>
+                    <input id="in-game-name" type="text" placeholder="Oyun-içi İsim" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
+                    <button type="submit" class="w-full py-3 rounded-md font-bold text-white btn-primary">Giriş Yap</button>
                 </form>
             </div>
         </div>
 
-        <div id="dashboard-view" class="hidden w-full max-w-4xl">
-            <header class="flex justify-between items-center mb-8">
+        <div id="dashboard-view" class="hidden w-full max-w-4xl mx-auto p-4 sm:p-6 md:p-8">
+            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 pb-4 border-b border-gray-700">
                 <div>
-                    <h1 class="text-3xl font-bold text-white">Klan Kasası Paneli</h1>
-                    <p class="text-gray-400">Hoş geldin, <span id="user-ingame-name" class="font-semibold"></span>!</p>
+                    <p class="text-sm text-gray-400">Hoş Geldin,</p>
+                    <h1 id="player-name" class="text-3xl font-bold text-white"></h1>
                 </div>
-                 <button id="logout-button" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium">Çıkış Yap</button>
+                <div class="text-left sm:text-right mt-4 sm:mt-0">
+                    <p class="text-sm text-gray-400">Güncel Bakiyen</p>
+                    <p id="player-balance" class="text-3xl font-bold text-green-400">0 Silver</p>
+                </div>
             </header>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="card col-span-1 md:col-span-2 p-6 rounded-lg flex flex-col justify-center">
-                    <h2 class="text-gray-400 text-sm font-medium mb-2">MEVCUT BAKİYEN</h2>
-                    <div class="flex items-center">
-                         <svg class="w-8 h-8 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 10v-2m0 0c-1.657 0-3-.895-3-2s1.343-2 3-2 3-.895 3-2-1.343-2-3-2m0 8c-1.11 0-2.08-.402-2.599-1M12 16v1"></path></svg>
-                        <p class="text-4xl font-bold text-white"><span id="user-balance">0</span> <span class="text-2xl text-gray-300">Silver</span></p>
-                    </div>
-                </div>
-                <div class="col-span-1 grid grid-cols-2 md:grid-cols-1 gap-4">
-                     <button id="open-deposit-modal" class="btn-primary p-4 rounded-lg h-full flex items-center justify-center text-center font-semibold">Loot Yatır</button>
-                    <button id="open-withdraw-modal" class="btn-primary p-4 rounded-lg h-full flex items-center justify-center text-center font-semibold">Çekim Talebi</button>
-                </div>
-            </div>
-
-            <div>
-                <h2 class="text-xl font-bold text-white mb-4">Son İşlemler</h2>
-                <div id="transactions-list" class="card rounded-lg p-2">
-                    <p class="text-center p-8 text-gray-400">Henüz bir işlem geçmişiniz bulunmuyor.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modallar -->
-    <div id="deposit-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="card w-full max-w-lg rounded-lg shadow-xl p-8" style="max-height: 90vh; overflow-y: auto;">
-            <h2 class="text-2xl font-bold mb-6">Loot Yatırma Formu</h2>
-            <form id="deposit-form">
-                <div class="mb-4">
-                    <label for="party-members" class="block text-sm font-medium mb-2">Parti Üyeleri (Adlarını virgülle ayırın)</label>
-                    <textarea id="party-members" rows="3" class="form-textarea w-full p-2 rounded-md" placeholder="PlayerA, PlayerB, PlayerC..."></textarea>
-                    <p class="text-xs text-gray-400 mt-1">Tek kişiyseniz boş bırakın.</p>
-                </div>
-                <div class="mb-6">
-                    <label class="block text-sm font-medium mb-2">Loot Ekran Görüntüsü</label>
-                    <div id="file-upload-area" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-gray-600 cursor-pointer hover:border-gray-500">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                            <p class="text-sm text-gray-400">Dosya seçmek için tıklayın</p>
-                            <input id="loot-image-input" type="file" class="sr-only" accept="image/*" required>
-                            <p class="text-xs text-gray-500" id="file-upload-status">PNG, JPG, GIF</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div id="deposit-form-container" class="card p-6 rounded-lg">
+                    <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
+                    <form id="deposit-form">
+                        <div class="mb-4">
+                            <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
+                            <textarea id="party-members" rows="3" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
                         </div>
-                    </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1 text-gray-300">Ekran Görüntüsü</label>
+                            <div id="file-drop-area" class="file-drop-area rounded-md p-6 text-center cursor-pointer">
+                                <p id="file-info" class="text-gray-400">Görseli buraya sürükle veya seçmek için tıkla</p>
+                                <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Talebi Gönder</button>
+                    </form>
                 </div>
-                <div class="flex justify-end gap-4">
-                    <button type="button" id="close-deposit-modal" class="btn-secondary px-6 py-2 rounded-md">İptal</button>
-                    <button type="submit" class="btn-primary px-6 py-2 rounded-md">Talep Gönder</button>
+
+                <div class="card p-6 rounded-lg">
+                    <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
+                    <form id="withdraw-form">
+                        <div class="mb-4">
+                             <label for="withdraw-amount" class="block text-sm font-medium mb-1 text-gray-300">Çekilecek Tutar</label>
+                            <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 rounded-md" required>
+                        </div>
+                        <button type="submit" class="w-full py-2 rounded-md font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
+                    </form>
                 </div>
-            </form>
-        </div>
-    </div>
-    
-    <div id="withdraw-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
-        <div class="card w-full max-w-md rounded-lg shadow-xl p-8">
-            <h2 class="text-2xl font-bold mb-6">Çekim Talebi</h2>
-            <p class="mb-4">Mevcut Bakiye: <span id="withdraw-modal-balance" class="font-bold text-lg">0</span> Silver</p>
-            <form id="withdraw-form">
-                <div class="mb-4">
-                    <label for="withdraw-amount" class="block text-sm font-medium mb-2">Çekilecek Miktar</label>
-                    <input type="number" id="withdraw-amount" class="form-input w-full p-3 rounded-md" placeholder="Örn: 5000000" required>
-                </div>
-                <div class="flex justify-end gap-4">
-                    <button type="button" id="close-withdraw-modal" class="btn-secondary px-6 py-2 rounded-md">İptal</button>
-                    <button type="submit" class="btn-primary px-6 py-2 rounded-md">Talep Oluştur</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     
@@ -115,23 +80,24 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         // --- FIREBASE YAPILANDIRMASI ---
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
           authDomain: "bank-8738a.firebaseapp.com",
           projectId: "bank-8738a",
-          storageBucket: "bank-8738a.appspot.com",
+          storageBucket: "bank-8738a.firebasestorage.app",
           messagingSenderId: "157747262596",
           appId: "1:157747262596:web:1f60a45a33c0c5a702fed1",
           measurementId: "G-T8Z3R2X6DJ"
         };
 
-        const appId = firebaseConfig.appId || 'default-albion-app';
+        const appId = firebaseConfig.appId || 'default-albion-app'; 
 
-        let app, auth, db, currentUser = null;
-        let userDataUnsubscribe = null, transactionsUnsubscribe = null;
+        let app, auth, db, storage;
+        let currentUser = null;
 
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
@@ -145,172 +111,149 @@
             setTimeout(() => notification.classList.add('hidden'), 3000);
         }
 
-        async function initializeFirebase() {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUser = user;
-                    const savedName = localStorage.getItem(`ingameName_${user.uid}`);
-                    if (savedName) await loadUserData(savedName);
-                    else showLoginView();
-                } else {
-                    try {
-                        await signInAnonymously(auth);
-                    } catch (error) {
-                        console.error("Authentication error:", error);
-                        showNotification("Kimlik doğrulama hatası.", true);
-                    }
-                }
-            });
-        }
+        async function loginOrCreateUser(name) {
+            const nameLower = name.toLowerCase();
+            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            const q = query(usersRef, where("inGameName_lowercase", "==", nameLower));
+            const snapshot = await getDocs(q);
 
-        async function performLogin(inGameName) {
-            if (!currentUser) return showNotification("Kimlik doğrulaması bekleniyor...", true);
-            try {
-                const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid);
-                await setDoc(userRef, { inGameName: inGameName, balance: 0, createdAt: serverTimestamp() }, { merge: true });
-                localStorage.setItem(`ingameName_${currentUser.uid}`, inGameName);
-                await loadUserData(inGameName);
-            } catch (error) {
-                console.error("Login error:", error);
-                showNotification("Giriş başarısız oldu.", true);
+            if (snapshot.empty) {
+                return showNotification("Bu isim sistemde kayıtlı değil. Lütfen admin ile görüşün.", true);
             }
-        }
-        
-        async function loadUserData(inGameName) {
-            if (!currentUser) return;
-            document.getElementById('user-ingame-name').textContent = inGameName;
             
-            if (userDataUnsubscribe) userDataUnsubscribe();
-            userDataUnsubscribe = onSnapshot(doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid), (doc) => {
-                if (doc.exists()) {
-                    const balance = doc.data().balance.toLocaleString('tr-TR');
-                    document.getElementById('user-balance').textContent = balance;
-                    document.getElementById('withdraw-modal-balance').textContent = balance;
-                } else {
-                    performLogout();
-                }
-            });
-
-            listenToTransactions(inGameName);
-            showDashboardView();
+            const userDoc = snapshot.docs[0];
+            currentUser = { id: userDoc.id, ...userDoc.data() };
+            localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+            showDashboard();
         }
 
-        function listenToTransactions(inGameName) {
-            if (transactionsUnsubscribe) transactionsUnsubscribe();
-            const q = query(collection(db, `artifacts/${appId}/public/data/transactions`), where("involvedMembers", "array-contains", inGameName));
-            
-            transactionsUnsubscribe = onSnapshot(q, (snapshot) => {
-                const listEl = document.getElementById('transactions-list');
-                if (snapshot.empty) {
-                    listEl.innerHTML = `<p class="text-center p-8 text-gray-400">İşlem geçmişi bulunmuyor.</p>`;
-                    return;
-                }
-                const docs = snapshot.docs.sort((a,b) => b.data().timestamp.toMillis() - a.data().timestamp.toMillis());
-                listEl.innerHTML = docs.map(doc => {
-                    const t = doc.data();
-                    const isDeposit = t.type === 'deposit';
-                    return `
-                        <div class="flex justify-between items-center p-4 border-b border-gray-700 last:border-b-0">
-                            <div>
-                                <p class="font-semibold">${t.description}</p>
-                                <p class="text-sm text-gray-400">${t.timestamp.toDate().toLocaleString('tr-TR')}</p>
-                            </div>
-                            <p class="font-bold ${isDeposit ? 'text-green-400' : 'text-red-400'}">
-                                ${isDeposit ? '+' : ''}${t.amount.toLocaleString('tr-TR')} Silver
-                            </p>
-                        </div>`;
-                }).join('');
-            });
-        }
-        
-        function performLogout() {
-            if(currentUser) localStorage.removeItem(`ingameName_${currentUser.uid}`);
-            if(userDataUnsubscribe) userDataUnsubscribe();
-            if(transactionsUnsubscribe) transactionsUnsubscribe();
-            showLoginView();
-        }
-
-        function showLoginView() {
-            loginView.classList.remove('hidden');
-            dashboardView.classList.add('hidden');
-        }
-
-        function showDashboardView() {
+        function showDashboard() {
             loginView.classList.add('hidden');
             dashboardView.classList.remove('hidden');
+            document.getElementById('player-name').textContent = currentUser.inGameName;
+            
+            const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
+            onSnapshot(userRef, (doc) => {
+                if(doc.exists()){
+                    const newBalance = doc.data().balance || 0;
+                    currentUser.balance = newBalance;
+                    document.getElementById('player-balance').textContent = `${newBalance.toLocaleString('tr-TR')} Silver`;
+                }
+            });
         }
-
-        // --- Event Listeners ---
+        
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const name = document.getElementById('ingame-name-input').value.trim();
-            if(name) performLogin(name);
-        });
-        
-        document.getElementById('logout-button').addEventListener('click', performLogout);
-
-        const depositModal = document.getElementById('deposit-modal');
-        const withdrawModal = document.getElementById('withdraw-modal');
-        document.getElementById('open-deposit-modal').addEventListener('click', () => depositModal.classList.remove('hidden'));
-        document.getElementById('close-deposit-modal').addEventListener('click', () => depositModal.classList.add('hidden'));
-        document.getElementById('open-withdraw-modal').addEventListener('click', () => withdrawModal.classList.remove('hidden'));
-        document.getElementById('close-withdraw-modal').addEventListener('click', () => withdrawModal.classList.add('hidden'));
-
-        const fileUploadArea = document.getElementById('file-upload-area');
-        const lootImageInput = document.getElementById('loot-image-input');
-        fileUploadArea.addEventListener('click', () => lootImageInput.click());
-        lootImageInput.addEventListener('change', () => {
-            const statusEl = document.getElementById('file-upload-status');
-            statusEl.textContent = lootImageInput.files.length > 0 ? `${lootImageInput.files[0].name} seçildi.` : 'PNG, JPG, GIF';
+            const name = document.getElementById('in-game-name').value.trim();
+            if (name) loginOrCreateUser(name);
         });
 
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitterName = localStorage.getItem(`ingameName_${currentUser.uid}`);
-            let partyMembers = document.getElementById('party-members').value.trim().split(',').map(n => n.trim()).filter(Boolean);
-            if (!partyMembers.includes(submitterName)) partyMembers.push(submitterName);
+            const button = e.target.querySelector('button[type="submit"]');
+            const fileInput = document.getElementById('screenshot-file');
+            const file = fileInput.files[0];
+            const partyMembers = document.getElementById('party-members').value.split(',').map(m => m.trim()).filter(m => m);
+
+            if (partyMembers.length === 0) return showNotification("Parti üyelerini girin.", true);
+            if (!file) return showNotification("Ekran görüntüsü seçin.", true);
+
+            button.disabled = true;
+            button.textContent = "Yükleniyor...";
 
             try {
+                // 1. Görseli Firebase Storage'a yükle
+                const filePath = `deposits/${currentUser.id}/${Date.now()}-${file.name}`;
+                const storageRef = ref(storage, filePath);
+                const uploadResult = await uploadBytes(storageRef, file);
+                
+                // 2. Yüklenen görselin public URL'ini al
+                const imageUrl = await getDownloadURL(uploadResult.ref);
+
+                // 3. Firestore'a talebi doğru URL ile kaydet
                 await addDoc(collection(db, `artifacts/${appId}/public/data/deposits`), {
-                    submitterId: currentUser.uid, submitterName, partyMembers,
-                    imageUrl: `simulated/${lootImageInput.files[0].name}`,
-                    status: 'pending', submittedAt: serverTimestamp()
+                    submitterId: currentUser.id,
+                    submitterName: currentUser.inGameName,
+                    partyMembers: partyMembers,
+                    imageUrl: imageUrl, // <-- DOĞRU URL BURAYA EKLENDİ
+                    status: 'pending',
+                    submittedAt: serverTimestamp()
                 });
-                showNotification("Loot yatırma talebi gönderildi!");
-                depositModal.classList.add('hidden');
-e.target.reset();
-                document.getElementById('file-upload-status').textContent = 'PNG, JPG, GIF';
+                
+                showNotification("Loot yatırma talebi başarıyla gönderildi.");
+                e.target.reset();
+                document.getElementById('file-info').textContent = 'Görseli buraya sürükle veya seçmek için tıkla';
             } catch (error) {
-                showNotification("Talep gönderilemedi. Lütfen tekrar deneyin.", true);
+                console.error("Deposit error:", error);
+                showNotification("Talep gönderilirken hata oluştu.", true);
+            } finally {
+                button.disabled = false;
+                button.textContent = "Talebi Gönder";
             }
         });
 
         document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseInt(document.getElementById('withdraw-amount').value);
-            const userDoc = await getDoc(doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid));
-            if (!userDoc.exists() || amount <= 0) return showNotification("Geçersiz miktar girdiniz.", true);
-            if (userDoc.data().balance < amount) return showNotification("Yetersiz bakiye!", true);
+            if (!amount || amount <= 0) return showNotification("Geçerli bir tutar girin.", true);
+            if (amount > currentUser.balance) return showNotification("Bakiyeniz yetersiz.", true);
             
-            try {
-                await addDoc(collection(db, `artifacts/${appId}/public/data/withdrawals`), {
-                    requesterId: currentUser.uid, requesterName: userDoc.data().inGameName, amount,
-                    status: 'pending', requestedAt: serverTimestamp()
-                });
-                showNotification("Çekim talebi başarıyla gönderildi.");
-                withdrawModal.classList.add('hidden');
-                e.target.reset();
-            } catch (error) {
-                showNotification("Talep gönderilemedi. Lütfen tekrar deneyin.", true);
-            }
+            await addDoc(collection(db, `artifacts/${appId}/public/data/withdrawals`), {
+                requesterId: currentUser.id,
+                requesterName: currentUser.inGameName,
+                amount: amount,
+                status: 'pending',
+                requestedAt: serverTimestamp()
+            });
+
+            showNotification("Çekim talebi oluşturuldu.");
+            e.target.reset();
         });
 
-        // Uygulamayı başlat
-        initializeFirebase();
+        // --- Dosya Sürükle-Bırak Alanı ---
+        const dropArea = document.getElementById('file-drop-area');
+        const fileInput = document.getElementById('screenshot-file');
+        const fileInfo = document.getElementById('file-info');
+
+        dropArea.addEventListener('click', () => fileInput.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            fileInput.files = e.dataTransfer.files;
+            fileInfo.textContent = fileInput.files[0].name;
+        });
+        fileInput.addEventListener('change', () => {
+             if(fileInput.files.length > 0) fileInfo.textContent = fileInput.files[0].name;
+        });
+        
+        // --- UYGULAMA BAŞLANGICI ---
+        async function initializeAppAndAuth() {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            storage = getStorage(app); // Storage servisini başlat
+            try {
+                await signInAnonymously(auth);
+                const savedUser = localStorage.getItem('loggedInUser');
+                if(savedUser){
+                    currentUser = JSON.parse(savedUser);
+                    showDashboard();
+                }
+            } catch (error) { console.error("Auth error", error); }
+        }
+
+        initializeAppAndAuth();
     </script>
 </body>
 </html>
