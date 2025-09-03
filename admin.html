@@ -42,6 +42,7 @@
                     <button data-tab="history" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">İşlem Geçmişi</button>
                     <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar & İstatistikler</button>
                     <button data-tab="guild" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Guild Yönetimi</button>
+                    <button data-tab="settings" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Ayarlar</button>
                 </nav>
             </div>
 
@@ -102,6 +103,20 @@
                     <button id="update-guild-members-button" class="btn-action w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white">Klan Üyelerini Veritabanıyla Senkronize Et</button>
                 </div>
             </div>
+
+            <div id="settings-content" class="tab-content hidden">
+                <div class="card p-6 rounded-lg max-w-lg mx-auto">
+                   <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
+                   <div class="space-y-4">
+                       <div>
+                           <label for="tax-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Vergi Oranı (%)</label>
+                           <input id="tax-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 20" class="form-input w-full p-2 rounded-md">
+                           <p class="text-xs text-gray-400 mt-1">Oyuncuların net kazancından kesilecek vergi yüzdesi.</p>
+                       </div>
+                       <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
+                   </div>
+               </div>
+           </div>
         </div>
     </div>
     
@@ -122,12 +137,12 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AYARLAR ---
         const ADMIN_PASSWORD = "KLAN_SIFRESI_123";
-        const CLAN_TAX_PERCENT = 0.05;
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
+        let guildSettings = { taxRate: 0.20 }; // Varsayılan
 
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
@@ -212,8 +227,11 @@
                     if (!depositDoc.exists()) throw new Error("Talep bulunamadı.");
                     
                     const data = depositDoc.data();
-                    const netAmount = totalSilver * (1 - CLAN_TAX_PERCENT);
+                    const repairCost = data.repairCost || 0;
+                    const netAmount = (totalSilver - repairCost) * (1 - guildSettings.taxRate);
                     const amountPerMember = Math.floor(netAmount / data.partyMembers.length);
+                    
+                    if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz.");
 
                     const partyMembersLower = data.partyMembers.map(name => name.toLowerCase());
                     const usersQuery = query(collection(db, `artifacts/${appId}/public/data/users`), where("inGameName_lowercase", "in", partyMembersLower));
@@ -260,9 +278,10 @@
         };
         
         // --- GÖSTERGE PANELİ (DASHBOARD) ---
-        function showDashboard() {
+        async function showDashboard() {
             adminLoginView.classList.add('hidden');
             adminDashboardView.classList.remove('hidden');
+            await loadGuildSettings();
             listenToRequests();
             setupTabs();
             document.querySelector('.tab-button[data-tab="requests"]').click();
@@ -303,10 +322,12 @@
                     
                     if (type === 'deposit') {
                         const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
+                        const repairCostText = data.repairCost ? `<p class="text-sm">Tamir Masrafı: <span class="font-semibold">${data.repairCost.toLocaleString('tr-TR')}</span></p>` : '';
                         return `<div class="card rounded-lg p-4">
                             <p class="text-xs text-gray-400">${date}</p>
                             <p>Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
                             <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
+                            ${repairCostText}
                             ${screenshotLink}
                             <div class="my-4">
                                 <label class="block text-sm">Toplam Satış Tutarı</label>
@@ -356,10 +377,9 @@
                 ...depositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
                 ...withdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
             ].sort((a, b) => {
-                // HATA DÜZELTMESİ: Eksik zaman damgalarına karşı daha güvenli sıralama.
                 const dateA = a.processedAt || a.submittedAt || a.requestedAt;
                 const dateB = b.processedAt || b.submittedAt || b.requestedAt;
-                if (!dateA || !dateB) return 0; // Eğer bir tarih yoksa sıralamayı değiştirme
+                if (!dateA || !dateB) return 0;
                 return dateB.toDate() - dateA.toDate();
             });
 
@@ -379,7 +399,6 @@
                 return;
             }
             historyListEl.innerHTML = allHistory.map(item => {
-                // HATA DÜZELTMESİ: Eksik zaman damgalarına karşı daha güvenli tarih gösterme.
                 const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
                 const isDeposit = item.type === 'Loot Yatırma';
                 const name = isDeposit ? item.submitterName : item.requesterName;
@@ -416,14 +435,17 @@
                 const data = doc.data();
                 if (!data.processedAt) return; 
                 const amount = data.processedAmount || 0;
+                const repairCost = data.repairCost || 0;
+                const netAmount = amount - repairCost;
                 const processedDate = data.processedAt.toDate();
 
                 totalVolume += amount;
                 if (processedDate >= weekAgo) weeklyVolume += amount;
                 if (processedDate >= todayStart) dailyVolume += amount;
                 
+                const amountPerMember = (netAmount * (1 - guildSettings.taxRate)) / data.partyMembers.length;
                 data.partyMembers.forEach(name => {
-                    depositors[name] = (depositors[name] || 0) + (amount / data.partyMembers.length);
+                    depositors[name] = (depositors[name] || 0) + amountPerMember;
                 });
             });
 
@@ -454,7 +476,28 @@
             renderTopList(document.getElementById('top-withdrawers'), withdrawers);
         }
 
-        // --- GUILD YÖNETİMİ ---
+        // --- GUILD & AYARLAR YÖNETİMİ ---
+        async function loadGuildSettings() {
+            const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
+            const docSnap = await getDoc(settingsRef);
+            if (docSnap.exists()) {
+                guildSettings = docSnap.data();
+            }
+            // Ayarlar sekmesindeki input'u doldur
+            document.getElementById('tax-rate-input').value = guildSettings.taxRate * 100;
+        }
+
+        document.getElementById('save-settings-button').addEventListener('click', async () => {
+            const taxRate = parseFloat(document.getElementById('tax-rate-input').value);
+            if (isNaN(taxRate) || taxRate < 0 || taxRate > 100) {
+                return showNotification("Geçersiz vergi oranı. 0-100 arası bir değer girin.", true);
+            }
+            const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
+            await setDoc(settingsRef, { taxRate: taxRate / 100 }, { merge: true });
+            await loadGuildSettings(); // Ayarları yeniden yükle
+            showNotification("Ayarlar başarıyla kaydedildi.");
+        });
+
         document.getElementById('update-guild-members-button').addEventListener('click', async () => {
             const button = document.getElementById('update-guild-members-button');
             button.disabled = true;
