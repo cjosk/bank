@@ -125,7 +125,7 @@
         import { getFirestore, doc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AYARLAR ---
-        const ADMIN_PASSWORD = "166516";
+        const ADMIN_PASSWORD = "KLAN_SIFRESI_123";
         const CLAN_TAX_PERCENT = 0.05;
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
 
@@ -191,7 +191,12 @@
 
             const { collectionName, id } = rejectionInfo;
             const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
-            await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason }).commit();
+            // GÜNCELLEME: Reddedilen taleplere de işlenme zamanı (processedAt) eklendi.
+            await writeBatch(db).update(ref, { 
+                status: 'rejected', 
+                rejectionReason: reason,
+                processedAt: serverTimestamp() 
+            }).commit();
             
             showNotification("Talep reddedildi.");
             rejectionModal.classList.add('hidden');
@@ -337,22 +342,36 @@
             const nameFilter = document.getElementById('history-search-name').value.toLowerCase();
             const dateFilter = document.getElementById('history-search-date').value;
 
-            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "!=", "pending"), orderBy("status"), orderBy("processedAt", "desc"));
-            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "!=", "pending"), orderBy("status"), orderBy("processedAt", "desc"));
+            // GÜNCELLEME: Sorgu basitleştirildi ve daha güvenilir hale getirildi.
+            const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
+            const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
 
-            const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
+            const completedDepositsQuery = query(depositsRef, where("status", "==", "completed"), orderBy("processedAt", "desc"));
+            const rejectedDepositsQuery = query(depositsRef, where("status", "==", "rejected"), orderBy("processedAt", "desc"));
+            const completedWithdrawalsQuery = query(withdrawalsRef, where("status", "==", "completed"), orderBy("processedAt", "desc"));
+            const rejectedWithdrawalsQuery = query(withdrawalsRef, where("status", "==", "rejected"), orderBy("processedAt", "desc"));
+
+            const [
+                completedDepositsSnap, rejectedDepositsSnap,
+                completedWithdrawalsSnap, rejectedWithdrawalsSnap
+            ] = await Promise.all([
+                getDocs(completedDepositsQuery), getDocs(rejectedDepositsQuery),
+                getDocs(completedWithdrawalsQuery), getDocs(rejectedWithdrawalsQuery)
+            ]);
             
             let allHistory = [
-                ...depositsSnapshot.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
-                ...withdrawalsSnapshot.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
-            ].sort((a, b) => (b.processedAt || b.submittedAt).toDate() - (a.processedAt || a.submittedAt).toDate());
+                ...completedDepositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
+                ...rejectedDepositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
+                ...completedWithdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' })),
+                ...rejectedWithdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
+            ].sort((a, b) => b.processedAt.toDate() - a.processedAt.toDate());
 
             if (nameFilter) {
                 allHistory = allHistory.filter(item => (item.submitterName || item.requesterName).toLowerCase().includes(nameFilter));
             }
             if (dateFilter) {
                 allHistory = allHistory.filter(item => {
-                    const itemDate = (item.processedAt || item.submittedAt).toDate().toISOString().split('T')[0];
+                    const itemDate = item.processedAt.toDate().toISOString().split('T')[0];
                     return itemDate === dateFilter;
                 });
             }
@@ -363,7 +382,7 @@
                 return;
             }
             historyListEl.innerHTML = allHistory.map(item => {
-                const date = (item.processedAt || item.submittedAt).toDate().toLocaleString('tr-TR');
+                const date = item.processedAt.toDate().toLocaleString('tr-TR');
                 const isDeposit = item.type === 'Loot Yatırma';
                 const name = isDeposit ? item.submitterName : item.requesterName;
                 const amount = isDeposit ? item.processedAmount : item.amount;
@@ -390,18 +409,21 @@
             const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
 
             const now = new Date();
-            const todayStart = new Date(now.setHours(0, 0, 0, 0));
-            const weekAgo = new Date(now.setDate(now.getDate() - 7));
-
+            const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+            const weekAgo = new Date(new Date().setDate(new Date().getDate() - 7));
+            
             let totalVolume = 0, weeklyVolume = 0, dailyVolume = 0;
             const depositors = {}, withdrawers = {};
 
             depositsSnapshot.docs.forEach(doc => {
                 const data = doc.data();
+                if (!data.processedAt) return; // Henüz işlenmemişse atla
                 const amount = data.processedAmount || 0;
+                const processedDate = data.processedAt.toDate();
+
                 totalVolume += amount;
-                if (data.processedAt.toDate() >= weekAgo) weeklyVolume += amount;
-                if (data.processedAt.toDate() >= todayStart) dailyVolume += amount;
+                if (processedDate >= weekAgo) weeklyVolume += amount;
+                if (processedDate >= todayStart) dailyVolume += amount;
                 
                 data.partyMembers.forEach(name => {
                     depositors[name] = (depositors[name] || 0) + (amount / data.partyMembers.length);
@@ -420,7 +442,10 @@
             
             const renderTopList = (el, data, topN = 5) => {
                 const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN);
-                if (sorted.length === 0) return;
+                if (sorted.length === 0) {
+                     el.innerHTML = '<p class="text-center text-gray-400">Veri yok.</p>';
+                     return;
+                }
                 el.innerHTML = sorted.map(([name, amount]) => `
                     <div class="flex justify-between text-sm">
                         <p>${name}</p>
