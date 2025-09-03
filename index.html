@@ -38,9 +38,15 @@
                     <p class="text-sm text-gray-400">Hoş Geldin,</p>
                     <h1 id="player-name" class="text-3xl font-bold text-white"></h1>
                 </div>
-                <div class="text-left sm:text-right mt-4 sm:mt-0">
-                    <p class="text-sm text-gray-400">Güncel Bakiyen</p>
-                    <p id="player-balance" class="text-3xl font-bold text-green-400">0 Silver</p>
+                <div class="text-left sm:text-right mt-4 sm:mt-0 space-y-2">
+                    <div>
+                        <p class="text-sm text-gray-400">Güncel Bakiyen</p>
+                        <p id="player-balance" class="text-3xl font-bold text-green-400">0 Silver</p>
+                    </div>
+                    <div>
+                         <p class="text-sm text-gray-400">Guild Alış Oranı</p>
+                         <p id="guild-purchase-rate" class="text-xl font-bold text-indigo-400">%80</p>
+                    </div>
                 </div>
             </header>
             
@@ -58,8 +64,12 @@
                             <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
                             <form id="deposit-form" class="space-y-4">
                                 <div>
-                                    <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
+                                    <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır)</label>
                                     <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
+                                </div>
+                                <div>
+                                    <label for="estimated-value" class="block text-sm font-medium mb-1 text-gray-300">Tahmini Toplam Tab/Sandık Tutarı</label>
+                                    <input type="number" id="estimated-value" placeholder="Örn: 15000000" class="form-input w-full p-2 rounded-md" required>
                                 </div>
                                 <div>
                                     <label for="repair-cost" class="block text-sm font-medium mb-1 text-gray-300">Toplam Tamir Masrafı (Repair Cost)</label>
@@ -75,7 +85,6 @@
                                 <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Loot Yatırma Talebi Gönder</button>
                             </form>
                         </div>
-
                          <div class="card p-6 rounded-lg">
                             <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
                             <form id="withdraw-form">
@@ -91,7 +100,7 @@
                         <h2 class="text-xl font-bold mb-4">Örnek Satış Hesaplayıcı</h2>
                         <div class="space-y-4">
                             <div>
-                                <label for="calc-total-value" class="block text-sm font-medium text-gray-300">Tahmini Toplam Satış Tutarı</label>
+                                <label for="calc-total-value" class="block text-sm font-medium text-gray-300">Toplam Satış Tutarı</label>
                                 <input type="number" id="calc-total-value" class="form-input w-full p-2 rounded-md mt-1" placeholder="10000000">
                             </div>
                             <div>
@@ -105,11 +114,11 @@
                         </div>
                         <div class="mt-6 pt-4 border-t border-gray-600 space-y-2">
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-400">Vergi Öncesi Net Tutar:</span>
+                                <span class="text-gray-400">Kesinti Öncesi Net Tutar:</span>
                                 <span id="calc-pre-tax" class="font-medium">0</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-400">Guild Vergisi (<span id="calc-tax-rate-display">%20</span>):</span>
+                                <span class="text-gray-400">Guild Kesintisi (<span id="calc-tax-rate-display">%20</span>):</span>
                                 <span id="calc-tax-amount" class="font-medium text-red-400">- 0</span>
                             </div>
                              <div class="flex justify-between text-lg font-bold mt-2">
@@ -152,7 +161,7 @@
 
         let app, auth, db, storage;
         let currentUser = null;
-        let guildSettings = { taxRate: 0.20 }; // Varsayılan
+        let guildSettings = { taxRate: 0.20 }; 
 
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
@@ -161,6 +170,19 @@
         const historyContent = document.getElementById('history-content');
         const tabAction = document.getElementById('tab-action');
         const tabHistory = document.getElementById('tab-history');
+
+        function formatSilver(num) {
+            num = Number(num);
+            if (isNaN(num)) return '0';
+
+            if (Math.abs(num) >= 1000000) {
+                return (num / 1000000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'M';
+            }
+            if (Math.abs(num) >= 1000) {
+                return (num / 1000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'K';
+            }
+            return num.toLocaleString('tr-TR');
+        }
 
         function showNotification(message, isError = false) {
             notification.textContent = message;
@@ -198,7 +220,7 @@
                 if(doc.exists()){
                     const newBalance = doc.data().balance || 0;
                     currentUser.balance = newBalance;
-                    document.getElementById('player-balance').textContent = `${newBalance.toLocaleString('tr-TR')} Silver`;
+                    document.getElementById('player-balance').textContent = `${formatSilver(newBalance)} Silver`;
                 }
             });
             listenToUserHistory();
@@ -217,6 +239,7 @@
             const file = fileInput.files[0];
             const partyMembers = document.getElementById('party-members').value.split(',').map(m => m.trim()).filter(m => m);
             const repairCost = parseInt(document.getElementById('repair-cost').value) || 0;
+            const estimatedValue = parseInt(document.getElementById('estimated-value').value) || 0;
 
             if (partyMembers.length === 0) return showNotification("Parti üyelerini girin.", true);
             if (!file) return showNotification("Ekran görüntüsü seçin.", true);
@@ -237,6 +260,7 @@
                     submitterId: currentUser.id,
                     submitterName: currentUser.inGameName,
                     partyMembers: partyMembers,
+                    estimatedValue: estimatedValue,
                     repairCost: repairCost,
                     imageUrl: imageUrl,
                     status: 'pending',
@@ -287,7 +311,6 @@
                     const dateA = a.processedAt || a.submittedAt || a.requestedAt;
                     const dateB = b.processedAt || b.submittedAt || b.requestedAt;
                     if (!dateA || !dateB) return 0;
-                    // HATA DÜZELTMESİ: 'a.toDate()' olan yanlış kod 'dateA.toDate()' olarak düzeltildi.
                     return dateB.toDate() - dateA.toDate();
                 });
                 if (allHistory.length === 0) {
@@ -303,12 +326,14 @@
                         default: statusClass = 'bg-yellow-500'; statusText = 'Beklemede';
                     }
                     const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
+                    const amountText = item.type === 'Silver Çekim' ? `${formatSilver(item.amount || 0)} Silver` : `Parti: ${(item.partyMembers || []).join(', ')}`;
+
                     return `
                         <div class="card p-4 rounded-md">
                             <div class="flex justify-between items-start">
                                 <div>
                                     <p class="font-bold">${item.type}</p>
-                                    <p class="text-sm text-gray-300">${item.type === 'Silver Çekim' ? (item.amount || 0).toLocaleString('tr-TR') + ' Silver' : 'Parti: ' + (item.partyMembers || []).join(', ')}</p>
+                                    <p class="text-sm text-gray-300">${amountText}</p>
                                     ${reasonHtml}
                                 </div>
                                 <div class="text-right">
@@ -323,7 +348,6 @@
             onSnapshot(query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id)), renderHistory);
         }
         
-        // --- YENİ BÖLÜM: HESAP MAKİNESİ ---
         const calcInputs = ['calc-total-value', 'calc-repair-cost', 'calc-party-count'];
         calcInputs.forEach(id => document.getElementById(id).addEventListener('input', calculatePayout));
         
@@ -337,22 +361,23 @@
             const finalAmount = preTax - taxAmount;
             const perPlayer = partyCount > 0 ? finalAmount / partyCount : 0;
             
-            document.getElementById('calc-pre-tax').textContent = preTax.toLocaleString('tr-TR');
-            document.getElementById('calc-tax-amount').textContent = `- ${Math.floor(taxAmount).toLocaleString('tr-TR')}`;
-            document.getElementById('calc-net-payout').textContent = `${Math.floor(perPlayer).toLocaleString('tr-TR')} Silver`;
+            document.getElementById('calc-pre-tax').textContent = formatSilver(preTax);
+            document.getElementById('calc-tax-amount').textContent = `- ${formatSilver(taxAmount)}`;
+            document.getElementById('calc-net-payout').textContent = `${formatSilver(perPlayer)} Silver`;
         }
         
         async function loadGuildSettings() {
             const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
             const docSnap = await getDoc(settingsRef);
-            if (docSnap.exists()) {
+            if (docSnap.exists() && docSnap.data().taxRate !== undefined) {
                 guildSettings = docSnap.data();
             }
+            const purchaseRate = (1 - guildSettings.taxRate) * 100;
+            document.getElementById('guild-purchase-rate').textContent = `Alış: %${purchaseRate}`;
             document.getElementById('calc-tax-rate-display').textContent = `%${guildSettings.taxRate * 100}`;
-            calculatePayout(); // Ayarlar yüklenince hesaplayıcıyı güncelle
+            calculatePayout();
         }
 
-        // --- DİĞER FONKSİYONLAR ---
         tabAction.addEventListener('click', () => {
             tabAction.classList.add('active'); tabHistory.classList.remove('active');
             actionContent.classList.remove('hidden'); historyContent.classList.add('hidden');
