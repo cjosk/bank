@@ -14,6 +14,8 @@
         .btn-primary:hover { background-color: #4338ca; }
         .file-drop-area { border: 2px dashed #4a5568; }
         .file-drop-area.highlight { border-color: #a0aec0; background-color: #4a5568; }
+        .tab-button { border-color: transparent; }
+        .tab-button.active { border-color: #4f46e5; color: white; }
     </style>
 </head>
 <body class="antialiased">
@@ -42,36 +44,53 @@
                 </div>
             </header>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div id="deposit-form-container" class="card p-6 rounded-lg">
-                    <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
-                    <form id="deposit-form">
-                        <div class="mb-4">
-                            <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
-                            <textarea id="party-members" rows="3" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1 text-gray-300">Ekran Görüntüsü</label>
-                            <div id="file-drop-area" class="file-drop-area rounded-md p-6 text-center cursor-pointer">
-                                <p id="file-info" class="text-gray-400">Görseli buraya sürükle veya seçmek için tıkla</p>
-                                <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
-                            </div>
-                        </div>
-                        <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Talebi Gönder</button>
-                    </form>
-                </div>
+            <div class="mb-6 border-b border-gray-700">
+                <nav class="flex space-x-4" aria-label="Tabs">
+                    <button id="tab-action" class="tab-button active py-2 px-4 font-medium text-gray-400 border-b-2">Yeni İşlem</button>
+                    <button id="tab-history" class="tab-button py-2 px-4 font-medium text-gray-400 border-b-2">İşlem Geçmişim</button>
+                </nav>
+            </div>
 
-                <div class="card p-6 rounded-lg">
-                    <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
-                    <form id="withdraw-form">
-                        <div class="mb-4">
-                             <label for="withdraw-amount" class="block text-sm font-medium mb-1 text-gray-300">Çekilecek Tutar</label>
-                            <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 rounded-md" required>
-                        </div>
-                        <button type="submit" class="w-full py-2 rounded-md font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
-                    </form>
+            <div id="action-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="deposit-form-container" class="card p-6 rounded-lg">
+                        <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
+                        <form id="deposit-form">
+                            <div class="mb-4">
+                                <label for="party-members" class="block text-sm font-medium mb-1 text-gray-300">Parti Üyeleri (Virgülle ayır, kendini de ekle)</label>
+                                <textarea id="party-members" rows="3" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2 rounded-md" required></textarea>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-1 text-gray-300">Ekran Görüntüsü</label>
+                                <div id="file-drop-area" class="file-drop-area rounded-md p-6 text-center cursor-pointer">
+                                    <p id="file-info" class="text-gray-400">Görseli buraya sürükle veya seçmek için tıkla</p>
+                                    <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full py-2 rounded-md font-bold text-white btn-primary">Talebi Gönder</button>
+                        </form>
+                    </div>
+
+                    <div class="card p-6 rounded-lg">
+                        <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
+                        <form id="withdraw-form">
+                            <div class="mb-4">
+                                 <label for="withdraw-amount" class="block text-sm font-medium mb-1 text-gray-300">Çekilecek Tutar</label>
+                                <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 rounded-md" required>
+                            </div>
+                            <button type="submit" class="w-full py-2 rounded-md font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
+                        </form>
+                    </div>
                 </div>
             </div>
+
+            <div id="history-content" class="hidden">
+                 <h2 class="text-xl font-bold mb-4 text-white">Tüm Taleplerim</h2>
+                 <div id="user-history-list" class="space-y-4">
+                    <p class="text-center text-gray-400">Henüz bir işlem yapmadınız.</p>
+                 </div>
+            </div>
+
         </div>
     </div>
     
@@ -80,10 +99,9 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // --- FIREBASE YAPILANDIRMASI ---
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
           authDomain: "bank-8738a.firebaseapp.com",
@@ -102,6 +120,10 @@
         const loginView = document.getElementById('login-view');
         const dashboardView = document.getElementById('dashboard-view');
         const notification = document.getElementById('notification');
+        const actionContent = document.getElementById('action-content');
+        const historyContent = document.getElementById('history-content');
+        const tabAction = document.getElementById('tab-action');
+        const tabHistory = document.getElementById('tab-history');
 
         function showNotification(message, isError = false) {
             notification.textContent = message;
@@ -140,6 +162,7 @@
                     document.getElementById('player-balance').textContent = `${newBalance.toLocaleString('tr-TR')} Silver`;
                 }
             });
+            listenToUserHistory();
         }
         
         document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -162,21 +185,14 @@
             button.textContent = "Yükleniyor...";
 
             try {
-                // HATA DÜZELTMESİ: Güvenlik kurallarına uymak için Firebase Authentication UID'sini kullanıyoruz.
                 const authUser = auth.currentUser;
-                if (!authUser) {
-                    throw new Error("Kimlik doğrulaması yapılamadı. Lütfen sayfayı yenileyin.");
-                }
+                if (!authUser) throw new Error("Kimlik doğrulaması yapılamadı. Lütfen sayfayı yenileyin.");
 
-                // 1. Görseli Firebase Storage'a yükle
                 const filePath = `deposits/${authUser.uid}/${Date.now()}-${file.name}`;
                 const storageRef = ref(storage, filePath);
                 const uploadResult = await uploadBytes(storageRef, file);
-                
-                // 2. Yüklenen görselin public URL'ini al
                 const imageUrl = await getDownloadURL(uploadResult.ref);
 
-                // 3. Firestore'a talebi doğru URL ile kaydet
                 await addDoc(collection(db, `artifacts/${appId}/public/data/deposits`), {
                     submitterId: currentUser.id,
                     submitterName: currentUser.inGameName,
@@ -216,24 +232,80 @@
             e.target.reset();
         });
 
-        // --- Dosya Sürükle-Bırak Alanı ---
+        function listenToUserHistory() {
+            const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id), orderBy("submittedAt", "desc"), limit(20));
+            const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id), orderBy("requestedAt", "desc"), limit(20));
+
+            const historyListEl = document.getElementById('user-history-list');
+            
+            const unsubDeposits = onSnapshot(depositsQuery, () => renderHistory());
+            const unsubWithdrawals = onSnapshot(withdrawalsQuery, () => renderHistory());
+
+            async function renderHistory() {
+                const depositsSnapshot = await getDocs(depositsQuery);
+                const withdrawalsSnapshot = await getDocs(withdrawalsQuery);
+
+                const deposits = depositsSnapshot.docs.map(doc => ({ type: 'Loot Yatırma', ...doc.data() }));
+                const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ type: 'Silver Çekim', ...doc.data() }));
+
+                const allHistory = [...deposits, ...withdrawals]
+                    .sort((a, b) => (b.submittedAt || b.requestedAt).toDate() - (a.submittedAt || a.requestedAt).toDate());
+                
+                if (allHistory.length === 0) {
+                    historyListEl.innerHTML = `<p class="text-center text-gray-400">Henüz bir işlem yapmadınız.</p>`;
+                    return;
+                }
+
+                historyListEl.innerHTML = allHistory.map(item => {
+                    const date = (item.submittedAt || item.requestedAt).toDate().toLocaleString('tr-TR');
+                    let statusClass, statusText;
+                    switch (item.status) {
+                        case 'completed': statusClass = 'bg-green-500'; statusText = 'Onaylandı'; break;
+                        case 'rejected': statusClass = 'bg-red-500'; statusText = 'Reddedildi'; break;
+                        default: statusClass = 'bg-yellow-500'; statusText = 'Beklemede';
+                    }
+                    const reasonHtml = item.status === 'rejected' && item.rejectionReason 
+                        ? `<p class="text-xs text-red-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
+
+                    return `
+                        <div class="card p-4 rounded-md">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold">${item.type}</p>
+                                    <p class="text-sm text-gray-300">${item.type === 'Silver Çekim' ? item.amount.toLocaleString('tr-TR') + ' Silver' : 'Parti: ' + item.partyMembers.join(', ')}</p>
+                                    ${reasonHtml}
+                                </div>
+                                <div class="text-right">
+                                     <span class="text-xs font-bold text-white px-2 py-1 rounded-full ${statusClass}">${statusText}</span>
+                                     <p class="text-xs text-gray-400 mt-2">${date}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+        }
+
+        tabAction.addEventListener('click', () => {
+            tabAction.classList.add('active');
+            tabHistory.classList.remove('active');
+            actionContent.classList.remove('hidden');
+            historyContent.classList.add('hidden');
+        });
+        tabHistory.addEventListener('click', () => {
+            tabHistory.classList.add('active');
+            tabAction.classList.remove('active');
+            historyContent.classList.remove('hidden');
+            actionContent.classList.add('hidden');
+        });
+
         const dropArea = document.getElementById('file-drop-area');
         const fileInput = document.getElementById('screenshot-file');
         const fileInfo = document.getElementById('file-info');
 
         dropArea.addEventListener('click', () => fileInput.click());
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
-        });
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
-        });
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }));
+        ['dragenter', 'dragover'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight')));
+        ['dragleave', 'drop'].forEach(eventName => dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight')));
 
         dropArea.addEventListener('drop', (e) => {
             fileInput.files = e.dataTransfer.files;
@@ -243,7 +315,6 @@
              if(fileInput.files.length > 0) fileInfo.textContent = fileInput.files[0].name;
         });
         
-        // --- UYGULAMA BAŞLANGICI ---
         async function initializeAppAndAuth() {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
