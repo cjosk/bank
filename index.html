@@ -113,17 +113,22 @@
     <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
 
     <script type="module">
-        // Firebase SDK'larını import et
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Vercel/Canvas ortam değişkenlerini kullan
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-albion-app';
-        let firebaseConfig;
-        try {
-            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        } catch (e) { console.error("Firebase config parsing error:", e); firebaseConfig = null; }
+        // --- FIREBASE YAPILANDIRMASI ---
+        const firebaseConfig = {
+          apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
+          authDomain: "bank-8738a.firebaseapp.com",
+          projectId: "bank-8738a",
+          storageBucket: "bank-8738a.appspot.com",
+          messagingSenderId: "157747262596",
+          appId: "1:157747262596:web:1f60a45a33c0c5a702fed1",
+          measurementId: "G-T8Z3R2X6DJ"
+        };
+
+        const appId = firebaseConfig.appId || 'default-albion-app';
 
         let app, auth, db, currentUser = null;
         let userDataUnsubscribe = null, transactionsUnsubscribe = null;
@@ -132,7 +137,6 @@
         const dashboardView = document.getElementById('dashboard-view');
         const notification = document.getElementById('notification');
 
-        // Kullanıcıya bildirim gösterme fonksiyonu
         function showNotification(message, isError = false) {
             notification.textContent = message;
             notification.classList.toggle('bg-red-500', isError);
@@ -141,9 +145,7 @@
             setTimeout(() => notification.classList.add('hidden'), 3000);
         }
 
-        // Firebase'i başlatan ana fonksiyon
         async function initializeFirebase() {
-            if (!firebaseConfig) return showNotification("Firebase yapılandırması eksik! Lütfen yönetici ile görüşün.", true);
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
@@ -156,11 +158,7 @@
                     else showLoginView();
                 } else {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
+                        await signInAnonymously(auth);
                     } catch (error) {
                         console.error("Authentication error:", error);
                         showNotification("Kimlik doğrulama hatası.", true);
@@ -169,12 +167,10 @@
             });
         }
 
-        // Giriş yapma fonksiyonu
         async function performLogin(inGameName) {
             if (!currentUser) return showNotification("Kimlik doğrulaması bekleniyor...", true);
             try {
                 const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid);
-                // Kullanıcı yoksa oluştur, varsa birleştir
                 await setDoc(userRef, { inGameName: inGameName, balance: 0, createdAt: serverTimestamp() }, { merge: true });
                 localStorage.setItem(`ingameName_${currentUser.uid}`, inGameName);
                 await loadUserData(inGameName);
@@ -184,7 +180,6 @@
             }
         }
         
-        // Kullanıcı verilerini yükleme ve dinleme
         async function loadUserData(inGameName) {
             if (!currentUser) return;
             document.getElementById('user-ingame-name').textContent = inGameName;
@@ -196,7 +191,6 @@
                     document.getElementById('user-balance').textContent = balance;
                     document.getElementById('withdraw-modal-balance').textContent = balance;
                 } else {
-                    // Veritabanında kullanıcı yoksa (silinmişse vb.) tekrar login ekranına yönlendir
                     performLogout();
                 }
             });
@@ -205,7 +199,6 @@
             showDashboardView();
         }
 
-        // Kullanıcının işlem geçmişini dinleme
         function listenToTransactions(inGameName) {
             if (transactionsUnsubscribe) transactionsUnsubscribe();
             const q = query(collection(db, `artifacts/${appId}/public/data/transactions`), where("involvedMembers", "array-contains", inGameName));
@@ -216,7 +209,6 @@
                     listEl.innerHTML = `<p class="text-center p-8 text-gray-400">İşlem geçmişi bulunmuyor.</p>`;
                     return;
                 }
-                // Firestore'dan gelen verileri tarihe göre sırala
                 const docs = snapshot.docs.sort((a,b) => b.data().timestamp.toMillis() - a.data().timestamp.toMillis());
                 listEl.innerHTML = docs.map(doc => {
                     const t = doc.data();
@@ -235,7 +227,6 @@
             });
         }
         
-        // Çıkış yapma
         function performLogout() {
             if(currentUser) localStorage.removeItem(`ingameName_${currentUser.uid}`);
             if(userDataUnsubscribe) userDataUnsubscribe();
@@ -291,7 +282,7 @@
                 });
                 showNotification("Loot yatırma talebi gönderildi!");
                 depositModal.classList.add('hidden');
-                e.target.reset();
+e.target.reset();
                 document.getElementById('file-upload-status').textContent = 'PNG, JPG, GIF';
             } catch (error) {
                 showNotification("Talep gönderilemedi. Lütfen tekrar deneyin.", true);
