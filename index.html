@@ -80,7 +80,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // HATA DÜZELTMESİ: Eksik olan 'getDocs' fonksiyonu buraya eklendi.
         import { getFirestore, doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
@@ -116,7 +115,7 @@
             const nameLower = name.toLowerCase();
             const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
             const q = query(usersRef, where("inGameName_lowercase", "==", nameLower));
-            const snapshot = await getDocs(q); // Bu satır 'getDocs' fonksiyonunu kullanıyor
+            const snapshot = await getDocs(q);
 
             if (snapshot.empty) {
                 return showNotification("Bu isim sistemde kayıtlı değil. Lütfen admin ile görüşün.", true);
@@ -163,8 +162,14 @@
             button.textContent = "Yükleniyor...";
 
             try {
+                // HATA DÜZELTMESİ: Güvenlik kurallarına uymak için Firebase Authentication UID'sini kullanıyoruz.
+                const authUser = auth.currentUser;
+                if (!authUser) {
+                    throw new Error("Kimlik doğrulaması yapılamadı. Lütfen sayfayı yenileyin.");
+                }
+
                 // 1. Görseli Firebase Storage'a yükle
-                const filePath = `deposits/${currentUser.id}/${Date.now()}-${file.name}`;
+                const filePath = `deposits/${authUser.uid}/${Date.now()}-${file.name}`;
                 const storageRef = ref(storage, filePath);
                 const uploadResult = await uploadBytes(storageRef, file);
                 
