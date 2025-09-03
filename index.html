@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albion Klan Kasası</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
+        .form-input, .form-textarea { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
+        .form-input::placeholder, .form-textarea::placeholder { color: #a0aec0; }
+        .btn-primary { background-color: #4a5568; border: 1px solid #718096; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #718096; border-color: #a0aec0; }
+        .btn-secondary { background-color: #2d3748; border: 1px solid #4a5568; }
+        .btn-secondary:hover { background-color: #4a5568; }
+        .card { background-color: #2d3748; border: 1px solid #4a5568; }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.7); }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <div id="login-view" class="w-full max-w-md">
+            <div class="card p-8 rounded-lg shadow-lg text-center">
+                <h1 class="text-3xl font-bold text-white mb-2">Klan Kasası</h1>
+                <p class="text-gray-400 mb-6">Devam etmek için oyun-içi adınızı girin.</p>
+                <form id="login-form">
+                    <input id="ingame-name-input" type="text" placeholder="Oyun-içi Adınız" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
+                    <button type="submit" class="btn-primary w-full py-3 rounded-md font-bold text-white">Giriş Yap</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="dashboard-view" class="hidden w-full max-w-4xl">
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-white">Klan Kasası Paneli</h1>
+                    <p class="text-gray-400">Hoş geldin, <span id="user-ingame-name" class="font-semibold"></span>!</p>
+                </div>
+                 <button id="logout-button" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium">Çıkış Yap</button>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card col-span-1 md:col-span-2 p-6 rounded-lg flex flex-col justify-center">
+                    <h2 class="text-gray-400 text-sm font-medium mb-2">MEVCUT BAKİYEN</h2>
+                    <div class="flex items-center">
+                         <svg class="w-8 h-8 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 10v-2m0 0c-1.657 0-3-.895-3-2s1.343-2 3-2 3-.895 3-2-1.343-2-3-2m0 8c-1.11 0-2.08-.402-2.599-1M12 16v1"></path></svg>
+                        <p class="text-4xl font-bold text-white"><span id="user-balance">0</span> <span class="text-2xl text-gray-300">Silver</span></p>
+                    </div>
+                </div>
+                <div class="col-span-1 grid grid-cols-2 md:grid-cols-1 gap-4">
+                     <button id="open-deposit-modal" class="btn-primary p-4 rounded-lg h-full flex items-center justify-center text-center font-semibold">Loot Yatır</button>
+                    <button id="open-withdraw-modal" class="btn-primary p-4 rounded-lg h-full flex items-center justify-center text-center font-semibold">Çekim Talebi</button>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold text-white mb-4">Son İşlemler</h2>
+                <div id="transactions-list" class="card rounded-lg p-2">
+                    <p class="text-center p-8 text-gray-400">Henüz bir işlem geçmişiniz bulunmuyor.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modallar -->
+    <div id="deposit-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="card w-full max-w-lg rounded-lg shadow-xl p-8" style="max-height: 90vh; overflow-y: auto;">
+            <h2 class="text-2xl font-bold mb-6">Loot Yatırma Formu</h2>
+            <form id="deposit-form">
+                <div class="mb-4">
+                    <label for="party-members" class="block text-sm font-medium mb-2">Parti Üyeleri (Adlarını virgülle ayırın)</label>
+                    <textarea id="party-members" rows="3" class="form-textarea w-full p-2 rounded-md" placeholder="PlayerA, PlayerB, PlayerC..."></textarea>
+                    <p class="text-xs text-gray-400 mt-1">Tek kişiyseniz boş bırakın.</p>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Loot Ekran Görüntüsü</label>
+                    <div id="file-upload-area" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-gray-600 cursor-pointer hover:border-gray-500">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                            <p class="text-sm text-gray-400">Dosya seçmek için tıklayın</p>
+                            <input id="loot-image-input" type="file" class="sr-only" accept="image/*" required>
+                            <p class="text-xs text-gray-500" id="file-upload-status">PNG, JPG, GIF</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="close-deposit-modal" class="btn-secondary px-6 py-2 rounded-md">İptal</button>
+                    <button type="submit" class="btn-primary px-6 py-2 rounded-md">Talep Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="withdraw-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="card w-full max-w-md rounded-lg shadow-xl p-8">
+            <h2 class="text-2xl font-bold mb-6">Çekim Talebi</h2>
+            <p class="mb-4">Mevcut Bakiye: <span id="withdraw-modal-balance" class="font-bold text-lg">0</span> Silver</p>
+            <form id="withdraw-form">
+                <div class="mb-4">
+                    <label for="withdraw-amount" class="block text-sm font-medium mb-2">Çekilecek Miktar</label>
+                    <input type="number" id="withdraw-amount" class="form-input w-full p-3 rounded-md" placeholder="Örn: 5000000" required>
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="close-withdraw-modal" class="btn-secondary px-6 py-2 rounded-md">İptal</button>
+                    <button type="submit" class="btn-primary px-6 py-2 rounded-md">Talep Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
+
+    <script type="module">
+        // Firebase SDK'larını import et
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Vercel/Canvas ortam değişkenlerini kullan
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-albion-app';
+        let firebaseConfig;
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        } catch (e) { console.error("Firebase config parsing error:", e); firebaseConfig = null; }
+
+        let app, auth, db, currentUser = null;
+        let userDataUnsubscribe = null, transactionsUnsubscribe = null;
+
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const notification = document.getElementById('notification');
+
+        // Kullanıcıya bildirim gösterme fonksiyonu
+        function showNotification(message, isError = false) {
+            notification.textContent = message;
+            notification.classList.toggle('bg-red-500', isError);
+            notification.classList.toggle('bg-green-500', !isError);
+            notification.classList.remove('hidden');
+            setTimeout(() => notification.classList.add('hidden'), 3000);
+        }
+
+        // Firebase'i başlatan ana fonksiyon
+        async function initializeFirebase() {
+            if (!firebaseConfig) return showNotification("Firebase yapılandırması eksik! Lütfen yönetici ile görüşün.", true);
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUser = user;
+                    const savedName = localStorage.getItem(`ingameName_${user.uid}`);
+                    if (savedName) await loadUserData(savedName);
+                    else showLoginView();
+                } else {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Authentication error:", error);
+                        showNotification("Kimlik doğrulama hatası.", true);
+                    }
+                }
+            });
+        }
+
+        // Giriş yapma fonksiyonu
+        async function performLogin(inGameName) {
+            if (!currentUser) return showNotification("Kimlik doğrulaması bekleniyor...", true);
+            try {
+                const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid);
+                // Kullanıcı yoksa oluştur, varsa birleştir
+                await setDoc(userRef, { inGameName: inGameName, balance: 0, createdAt: serverTimestamp() }, { merge: true });
+                localStorage.setItem(`ingameName_${currentUser.uid}`, inGameName);
+                await loadUserData(inGameName);
+            } catch (error) {
+                console.error("Login error:", error);
+                showNotification("Giriş başarısız oldu.", true);
+            }
+        }
+        
+        // Kullanıcı verilerini yükleme ve dinleme
+        async function loadUserData(inGameName) {
+            if (!currentUser) return;
+            document.getElementById('user-ingame-name').textContent = inGameName;
+            
+            if (userDataUnsubscribe) userDataUnsubscribe();
+            userDataUnsubscribe = onSnapshot(doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid), (doc) => {
+                if (doc.exists()) {
+                    const balance = doc.data().balance.toLocaleString('tr-TR');
+                    document.getElementById('user-balance').textContent = balance;
+                    document.getElementById('withdraw-modal-balance').textContent = balance;
+                } else {
+                    // Veritabanında kullanıcı yoksa (silinmişse vb.) tekrar login ekranına yönlendir
+                    performLogout();
+                }
+            });
+
+            listenToTransactions(inGameName);
+            showDashboardView();
+        }
+
+        // Kullanıcının işlem geçmişini dinleme
+        function listenToTransactions(inGameName) {
+            if (transactionsUnsubscribe) transactionsUnsubscribe();
+            const q = query(collection(db, `artifacts/${appId}/public/data/transactions`), where("involvedMembers", "array-contains", inGameName));
+            
+            transactionsUnsubscribe = onSnapshot(q, (snapshot) => {
+                const listEl = document.getElementById('transactions-list');
+                if (snapshot.empty) {
+                    listEl.innerHTML = `<p class="text-center p-8 text-gray-400">İşlem geçmişi bulunmuyor.</p>`;
+                    return;
+                }
+                // Firestore'dan gelen verileri tarihe göre sırala
+                const docs = snapshot.docs.sort((a,b) => b.data().timestamp.toMillis() - a.data().timestamp.toMillis());
+                listEl.innerHTML = docs.map(doc => {
+                    const t = doc.data();
+                    const isDeposit = t.type === 'deposit';
+                    return `
+                        <div class="flex justify-between items-center p-4 border-b border-gray-700 last:border-b-0">
+                            <div>
+                                <p class="font-semibold">${t.description}</p>
+                                <p class="text-sm text-gray-400">${t.timestamp.toDate().toLocaleString('tr-TR')}</p>
+                            </div>
+                            <p class="font-bold ${isDeposit ? 'text-green-400' : 'text-red-400'}">
+                                ${isDeposit ? '+' : ''}${t.amount.toLocaleString('tr-TR')} Silver
+                            </p>
+                        </div>`;
+                }).join('');
+            });
+        }
+        
+        // Çıkış yapma
+        function performLogout() {
+            if(currentUser) localStorage.removeItem(`ingameName_${currentUser.uid}`);
+            if(userDataUnsubscribe) userDataUnsubscribe();
+            if(transactionsUnsubscribe) transactionsUnsubscribe();
+            showLoginView();
+        }
+
+        function showLoginView() {
+            loginView.classList.remove('hidden');
+            dashboardView.classList.add('hidden');
+        }
+
+        function showDashboardView() {
+            loginView.classList.add('hidden');
+            dashboardView.classList.remove('hidden');
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('ingame-name-input').value.trim();
+            if(name) performLogin(name);
+        });
+        
+        document.getElementById('logout-button').addEventListener('click', performLogout);
+
+        const depositModal = document.getElementById('deposit-modal');
+        const withdrawModal = document.getElementById('withdraw-modal');
+        document.getElementById('open-deposit-modal').addEventListener('click', () => depositModal.classList.remove('hidden'));
+        document.getElementById('close-deposit-modal').addEventListener('click', () => depositModal.classList.add('hidden'));
+        document.getElementById('open-withdraw-modal').addEventListener('click', () => withdrawModal.classList.remove('hidden'));
+        document.getElementById('close-withdraw-modal').addEventListener('click', () => withdrawModal.classList.add('hidden'));
+
+        const fileUploadArea = document.getElementById('file-upload-area');
+        const lootImageInput = document.getElementById('loot-image-input');
+        fileUploadArea.addEventListener('click', () => lootImageInput.click());
+        lootImageInput.addEventListener('change', () => {
+            const statusEl = document.getElementById('file-upload-status');
+            statusEl.textContent = lootImageInput.files.length > 0 ? `${lootImageInput.files[0].name} seçildi.` : 'PNG, JPG, GIF';
+        });
+
+        document.getElementById('deposit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitterName = localStorage.getItem(`ingameName_${currentUser.uid}`);
+            let partyMembers = document.getElementById('party-members').value.trim().split(',').map(n => n.trim()).filter(Boolean);
+            if (!partyMembers.includes(submitterName)) partyMembers.push(submitterName);
+
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/deposits`), {
+                    submitterId: currentUser.uid, submitterName, partyMembers,
+                    imageUrl: `simulated/${lootImageInput.files[0].name}`,
+                    status: 'pending', submittedAt: serverTimestamp()
+                });
+                showNotification("Loot yatırma talebi gönderildi!");
+                depositModal.classList.add('hidden');
+                e.target.reset();
+                document.getElementById('file-upload-status').textContent = 'PNG, JPG, GIF';
+            } catch (error) {
+                showNotification("Talep gönderilemedi. Lütfen tekrar deneyin.", true);
+            }
+        });
+
+        document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseInt(document.getElementById('withdraw-amount').value);
+            const userDoc = await getDoc(doc(db, `artifacts/${appId}/public/data/users`, currentUser.uid));
+            if (!userDoc.exists() || amount <= 0) return showNotification("Geçersiz miktar girdiniz.", true);
+            if (userDoc.data().balance < amount) return showNotification("Yetersiz bakiye!", true);
+            
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/public/data/withdrawals`), {
+                    requesterId: currentUser.uid, requesterName: userDoc.data().inGameName, amount,
+                    status: 'pending', requestedAt: serverTimestamp()
+                });
+                showNotification("Çekim talebi başarıyla gönderildi.");
+                withdrawModal.classList.add('hidden');
+                e.target.reset();
+            } catch (error) {
+                showNotification("Talep gönderilemedi. Lütfen tekrar deneyin.", true);
+            }
+        });
+
+        // Uygulamayı başlat
+        initializeFirebase();
+    </script>
+</body>
+</html>
+
