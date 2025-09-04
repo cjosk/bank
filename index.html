@@ -305,8 +305,13 @@
                 if (snapshot.empty) {
                     loginView.classList.add('hidden');
                     linkAccountView.classList.remove('hidden');
-                    document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
-                    document.getElementById('discord-username').textContent = discordUser.username;
+                    if (tempDiscordUser.avatar) {
+                        document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/avatars/${tempDiscordUser.id}/${tempDiscordUser.avatar}.png`;
+                    } else {
+                        const defaultAvatarIndex = (parseInt(tempDiscordUser.id) >> 22) % 6;
+                        document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+                    }
+                    document.getElementById('discord-username').textContent = tempDiscordUser.username;
                 } else {
                     const userDoc = snapshot.docs[0];
                     const userData = userDoc.data();
@@ -375,8 +380,13 @@
             dashboardView.classList.remove('hidden');
             document.getElementById('player-name').textContent = currentUser.inGameName;
             
-            if (currentUser.discordId && currentUser.discordAvatar) {
-                document.getElementById('header-discord-avatar').src = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.discordAvatar}.png`;
+            if (currentUser.discordId) {
+                if (currentUser.discordAvatar) {
+                    document.getElementById('header-discord-avatar').src = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.discordAvatar}.png`;
+                } else {
+                    const defaultAvatarIndex = (parseInt(currentUser.discordId) >> 22) % 6;
+                    document.getElementById('header-discord-avatar').src = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+                }
             } else {
                 document.getElementById('header-discord-avatar').src = 'https://placehold.co/64x64/27272A/E4E4E7?text=..';
             }
