@@ -40,8 +40,9 @@
                 <nav class="flex flex-wrap -mb-px space-x-4" aria-label="Tabs">
                     <button data-tab="requests" class="tab-button active py-2 px-4 font-medium text-gray-300 border-b-2">Bekleyen Talepler</button>
                     <button data-tab="history" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">İşlem Geçmişi</button>
-                    <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar & İstatistikler</button>
+                    <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar</button>
                     <button data-tab="guild" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Guild Yönetimi</button>
+                    <button data-tab="logs" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Kayıt Logları</button>
                     <button data-tab="settings" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Ayarlar</button>
                 </nav>
             </div>
@@ -84,7 +85,6 @@
                         <p id="total-guild-profit" class="text-2xl font-bold text-green-400">0</p>
                     </div>
                  </div>
-
                  <h2 class="text-2xl font-bold text-white mb-4">Kâr Analizi</h2>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <div class="card p-4 rounded-lg text-center">
@@ -100,7 +100,6 @@
                         <p id="monthly-profit" class="text-2xl font-bold">0</p>
                     </div>
                  </div>
-
                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h3 class="text-xl font-bold mb-2">En Çok Loot Yatıranlar (Net Kazanç)</h3>
@@ -118,6 +117,24 @@
                     <h2 class="text-xl font-bold text-white mb-4">Guild Yönetimi</h2>
                     <p class="text-gray-300 mb-4">Yeni üyeleri sisteme kaydetmek veya mevcut üyeleri senkronize etmek için aşağıdaki butonu kullanın.</p>
                     <button id="update-guild-members-button" class="btn-action w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white">Klan Üyelerini Veritabanıyla Senkronize Et</button>
+                </div>
+            </div>
+
+             <div id="logs-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Discord - Oyun Nick Eşleşme Logları</h2>
+                <div class="card rounded-lg overflow-hidden">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Discord Kullanıcısı</th>
+                                <th scope="col" class="px-6 py-3">Oyun-içi İsim</th>
+                                <th scope="col" class="px-6 py-3">Kayıt Tarihi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registration-logs-list">
+                           <!-- Loglar Javascript ile buraya yüklenecek -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -159,7 +176,7 @@
         // --- AYARLAR ---
         const ADMIN_PASSWORD = "KLAN_SIFRESI_123";
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
-        let guildSettings = { taxRate: 0.20 }; // Varsayılan: %20 kesinti (%80 alış)
+        let guildSettings = { taxRate: 0.20 };
 
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
@@ -183,17 +200,11 @@
         const rejectionModal = document.getElementById('rejection-modal');
         let rejectionInfo = {};
 
-        // --- TEMEL FONKSİYONLAR ---
         function formatSilver(num) {
             num = Number(num);
             if (isNaN(num)) return '0';
-
-            if (Math.abs(num) >= 1000000) {
-                return (num / 1000000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'M';
-            }
-            if (Math.abs(num) >= 1000) {
-                return (num / 1000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'K';
-            }
+            if (Math.abs(num) >= 1000000) return (num / 1000000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'M';
+            if (Math.abs(num) >= 1000) return (num / 1000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'K';
             return num.toLocaleString('tr-TR');
         }
 
@@ -205,47 +216,10 @@
             setTimeout(() => notification.classList.add('hidden'), 4000);
         }
 
-        document.getElementById('admin-login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (document.getElementById('admin-password').value === ADMIN_PASSWORD) {
-                sessionStorage.setItem('isAdminAuthenticated', 'true');
-                showDashboard();
-            } else {
-                showNotification("Yanlış şifre!", true);
-            }
-        });
-
-        document.getElementById('admin-logout-button').addEventListener('click', () => {
-            sessionStorage.removeItem('isAdminAuthenticated');
-            window.location.reload();
-        });
-        
-        // --- İSTEK YÖNETİMİ ---
         window.openRejectionModal = (collectionName, id) => {
             rejectionInfo = { collectionName, id };
             rejectionModal.classList.remove('hidden');
         };
-        
-        document.getElementById('cancel-rejection').addEventListener('click', () => {
-             rejectionModal.classList.add('hidden');
-        });
-
-        document.getElementById('confirm-rejection').addEventListener('click', async () => {
-            const reason = document.getElementById('rejection-reason').value.trim();
-            if (!reason) return showNotification("Lütfen bir red sebebi girin.", true);
-
-            const { collectionName, id } = rejectionInfo;
-            const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
-            await writeBatch(db).update(ref, { 
-                status: 'rejected', 
-                rejectionReason: reason,
-                processedAt: serverTimestamp() 
-            }).commit();
-            
-            showNotification("Talep reddedildi.");
-            rejectionModal.classList.add('hidden');
-            document.getElementById('rejection-reason').value = '';
-        });
 
         window.approveDeposit = async (id) => {
             const totalSilver = parseInt(document.getElementById(`amount-${id}`).value);
@@ -265,12 +239,8 @@
 
                     const partyMembersLower = data.partyMembers.map(name => name.toLowerCase());
                     const usersQuery = query(collection(db, `artifacts/${appId}/public/data/users`), where("inGameName_lowercase", "in", partyMembersLower));
-                    
                     const userDocsSnapshot = await getDocs(usersQuery);
-                    
-                    if (userDocsSnapshot.docs.length !== data.partyMembers.length) {
-                        throw new Error("Parti üyelerinden bazıları sistemde kayıtlı değil. Lütfen önce üyeleri güncelleyin.");
-                    }
+                    if (userDocsSnapshot.docs.length !== data.partyMembers.length) throw new Error("Parti üyelerinden bazıları sistemde kayıtlı değil. Lütfen önce üyeleri güncelleyin.");
 
                     userDocsSnapshot.docs.forEach(userDoc => {
                         transaction.update(userDoc.ref, { balance: (userDoc.data().balance || 0) + amountPerMember });
@@ -307,11 +277,10 @@
             }
         };
         
-        // --- GÖSTERGE PANELİ (DASHBOARD) ---
-        async function showDashboard() {
+        function showDashboard() {
             adminLoginView.classList.add('hidden');
             adminDashboardView.classList.remove('hidden');
-            await loadGuildSettings();
+            loadGuildSettings();
             listenToRequests();
             setupTabs();
             document.querySelector('.tab-button[data-tab="requests"]').click();
@@ -328,6 +297,7 @@
                             content.classList.remove('hidden');
                             if (target === 'reports') loadReportsData();
                             if (target === 'history') loadHistoryData();
+                            if (target === 'logs') loadRegistrationLogs();
                         } else {
                             content.classList.add('hidden');
                         }
@@ -338,54 +308,24 @@
             document.getElementById('history-search-date').addEventListener('change', () => loadHistoryData());
         }
         
-        // --- VERİ ÇEKME VE GÖSTERME ---
         function listenToRequests() {
             const renderRequests = (listEl, querySnapshot, type) => {
-                 if (querySnapshot.empty) {
-                    listEl.innerHTML = `<p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p>`;
-                    return;
-                }
+                 if (querySnapshot.empty) { listEl.innerHTML = `<p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p>`; return; }
                 listEl.innerHTML = querySnapshot.docs.map(doc => {
-                    const data = doc.data();
-                    const id = doc.id;
+                    const data = doc.data(); const id = doc.id;
                     const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
-                    
                     if (type === 'deposit') {
                         const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
                         const repairCostText = data.repairCost ? `<p class="text-sm">Tamir Masrafı: <span class="font-semibold">${formatSilver(data.repairCost)}</span></p>` : '';
                         const estimatedValueText = data.estimatedValue ? `<p class="text-sm">Tahmini Değer: <span class="font-semibold">${formatSilver(data.estimatedValue)}</span></p>` : '';
-                        return `<div class="card rounded-lg p-4">
-                            <p class="text-xs text-gray-400">${date}</p>
-                            <p>Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p>
-                            <p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>
-                            ${estimatedValueText}
-                            ${repairCostText}
-                            ${screenshotLink}
-                            <div class="my-4">
-                                <label class="block text-sm">Gerçekleşen Toplam Satış Tutarı</label>
-                                <input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000">
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla</button>
-                                <button onclick="window.openRejectionModal('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button>
-                            </div>
-                        </div>`;
-                    } else { // Withdrawal
-                        return `<div class="card rounded-lg p-4">
-                            <p class="text-xs text-gray-400">${date}</p>
-                            <p>Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p>
-                            <p class="text-lg font-bold my-2">${formatSilver(data.amount)} Silver</p>
-                            <div class="flex gap-2">
-                                <button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla (Ödendi)</button>
-                                <button onclick="window.openRejectionModal('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button>
-                            </div>
-                        </div>`;
+                        return `<div class="card rounded-lg p-4"><p class="text-xs text-gray-400">${date}</p><p>Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p><p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>${estimatedValueText}${repairCostText}${screenshotLink}<div class="my-4"><label class="block text-sm">Gerçekleşen Toplam Satış Tutarı</label><input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000"></div><div class="flex gap-2"><button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla</button><button onclick="window.openRejectionModal('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button></div></div>`;
+                    } else {
+                        return `<div class="card rounded-lg p-4"><p class="text-xs text-gray-400">${date}</p><p>Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p><p class="text-lg font-bold my-2">${formatSilver(data.amount)} Silver</p><div class="flex gap-2"><button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla (Ödendi)</button><button onclick="window.openRejectionModal('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button></div></div>`;
                     }
                 }).join('');
             };
             const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "pending"));
             onSnapshot(depositsQuery, (snapshot) => renderRequests(document.getElementById('deposit-requests-list'), snapshot, 'deposit'));
-
             const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "pending"));
             onSnapshot(withdrawalsQuery, (snapshot) => renderRequests(document.getElementById('withdraw-requests-list'), snapshot, 'withdraw'));
         }
@@ -393,153 +333,64 @@
         async function loadHistoryData() {
             const nameFilter = document.getElementById('history-search-name').value.toLowerCase();
             const dateFilter = document.getElementById('history-search-date').value;
-
             const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
             const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
             const depositsQuery = query(depositsRef, where("status", "!=", "pending"));
             const withdrawalsQuery = query(withdrawalsRef, where("status", "!=", "pending"));
             const [depositsSnap, withdrawalsSnap] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
-            
-            let allHistory = [
-                ...depositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })),
-                ...withdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))
-            ].sort((a, b) => {
-                const dateA = a.processedAt || a.submittedAt || a.requestedAt;
-                const dateB = b.processedAt || b.submittedAt || b.requestedAt;
-                if (!dateA || !dateB) return 0;
-                return dateB.toDate() - dateA.toDate();
-            });
-
+            let allHistory = [...depositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })), ...withdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))].sort((a, b) => { const dateA = a.processedAt || a.submittedAt || a.requestedAt; const dateB = b.processedAt || b.submittedAt || b.requestedAt; if (!dateA || !dateB) return 0; return dateB.toDate() - dateA.toDate(); });
             if (nameFilter) allHistory = allHistory.filter(item => (item.submitterName || item.requesterName).toLowerCase().includes(nameFilter));
-            if (dateFilter) allHistory = allHistory.filter(item => {
-                const itemDate = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toISOString().split('T')[0];
-                return itemDate === dateFilter;
-            });
-
+            if (dateFilter) allHistory = allHistory.filter(item => { const itemDate = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toISOString().split('T')[0]; return itemDate === dateFilter; });
             const historyListEl = document.getElementById('history-list');
-            if (allHistory.length === 0) {
-                historyListEl.innerHTML = '<p class="p-8 text-center text-gray-400">Filtreye uygun kayıt bulunamadı.</p>';
-                return;
-            }
-            historyListEl.innerHTML = allHistory.map(item => {
-                const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
-                const isDeposit = item.type === 'Loot Yatırma';
-                const name = isDeposit ? item.submitterName : item.requesterName;
-                const statusClass = item.status === 'completed' ? 'text-green-400' : 'text-red-400';
-                const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-gray-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
-                
-                let detailsHtml = '';
-                if (isDeposit) {
-                    const processedAmountText = `Gerçekleşen Satış: <span class="font-semibold text-green-400">${formatSilver(item.processedAmount || 0)}</span>`;
-                    const repairCostText = `Tamir: <span class="font-semibold text-red-400">${formatSilver(item.repairCost || 0)}</span>`;
-                    const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-indigo-400 hover:underline">Görsel</a>` : '';
-                    detailsHtml = `<div class="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-4 gap-y-1">${processedAmountText} | ${repairCostText} | ${screenshotLink}</div>`;
-                } else {
-                     const amount = item.amount || 0;
-                     detailsHtml = `<p class="text-sm ${statusClass}">${formatSilver(amount)} Silver</p>`;
-                }
-
-                return `
-                    <div class="card p-3 rounded-md">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>
-                                ${detailsHtml}
-                                ${reasonHtml}
-                            </div>
-                            <p class="text-xs text-gray-400 text-right flex-shrink-0 ml-4">${date}</p>
-                        </div>
-                    </div>`;
-            }).join('');
+            if (allHistory.length === 0) { historyListEl.innerHTML = '<p class="p-8 text-center text-gray-400">Filtreye uygun kayıt bulunamadı.</p>'; return; }
+            historyListEl.innerHTML = allHistory.map(item => { const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok'; const isDeposit = item.type === 'Loot Yatırma'; const name = isDeposit ? item.submitterName : item.requesterName; const statusClass = item.status === 'completed' ? 'text-green-400' : 'text-red-400'; const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-gray-400 mt-1">Neden: ${item.rejectionReason}</p>` : ''; let detailsHtml = ''; if (isDeposit) { const processedAmountText = `Gerçekleşen Satış: <span class="font-semibold text-green-400">${formatSilver(item.processedAmount || 0)}</span>`; const repairCostText = `Tamir: <span class="font-semibold text-red-400">${formatSilver(item.repairCost || 0)}</span>`; const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-indigo-400 hover:underline">Görsel</a>` : ''; detailsHtml = `<div class="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-4 gap-y-1">${processedAmountText} | ${repairCostText} | ${screenshotLink}</div>`; } else { const amount = item.amount || 0; detailsHtml = `<p class="text-sm ${statusClass}">${formatSilver(amount)} Silver</p>`; } return `<div class="card p-3 rounded-md"><div class="flex justify-between items-start"><div><p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>${detailsHtml}${reasonHtml}</div><p class="text-xs text-gray-400 text-right flex-shrink-0 ml-4">${date}</p></div></div>`; }).join('');
         }
 
         async function loadReportsData() {
             const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "completed"));
             const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "completed"));
-
             const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
-
             const now = new Date();
             const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
             const weekAgo = new Date(new Date().setDate(now.getDate() - 7));
             const monthAgo = new Date(new Date().setDate(now.getDate() - 30));
-            
             let totalDepositedValue = 0, totalRepairCost = 0, totalGuildProfit = 0;
             let dailyProfit = 0, weeklyProfit = 0, monthlyProfit = 0;
             const depositors = {}, withdrawers = {};
-
-            depositsSnapshot.docs.forEach(doc => {
-                const data = doc.data();
-                if (!data.processedAt) return; 
-                
-                const amount = data.processedAmount || 0;
-                const repairCost = data.repairCost || 0;
-                const netLootValue = amount - repairCost;
-                const processedDate = data.processedAt.toDate();
-                const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0;
-
-                totalDepositedValue += amount;
-                totalRepairCost += repairCost;
-                totalGuildProfit += guildProfit;
-
-                if (processedDate >= todayStart) dailyProfit += guildProfit;
-                if (processedDate >= weekAgo) weeklyProfit += guildProfit;
-                if (processedDate >= monthAgo) monthlyProfit += guildProfit;
-                
-                const amountToPlayers = netLootValue > 0 ? netLootValue * (1 - guildSettings.taxRate) : 0;
-                const amountPerMember = amountToPlayers / data.partyMembers.length;
-                data.partyMembers.forEach(name => {
-                    depositors[name] = (depositors[name] || 0) + amountPerMember;
-                });
-            });
-
-            withdrawalsSnapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const name = data.requesterName;
-                withdrawers[name] = (withdrawers[name] || 0) + data.amount;
-            });
-            
+            depositsSnapshot.docs.forEach(doc => { const data = doc.data(); if (!data.processedAt) return; const amount = data.processedAmount || 0; const repairCost = data.repairCost || 0; const netLootValue = amount - repairCost; const processedDate = data.processedAt.toDate(); const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0; totalDepositedValue += amount; totalRepairCost += repairCost; totalGuildProfit += guildProfit; if (processedDate >= todayStart) dailyProfit += guildProfit; if (processedDate >= weekAgo) weeklyProfit += guildProfit; if (processedDate >= monthAgo) monthlyProfit += guildProfit; const amountToPlayers = netLootValue > 0 ? netLootValue * (1 - guildSettings.taxRate) : 0; const amountPerMember = amountToPlayers / data.partyMembers.length; data.partyMembers.forEach(name => { depositors[name] = (depositors[name] || 0) + amountPerMember; }); });
+            withdrawalsSnapshot.docs.forEach(doc => { const data = doc.data(); const name = data.requesterName; withdrawers[name] = (withdrawers[name] || 0) + data.amount; });
             document.getElementById('total-deposited-value').textContent = formatSilver(totalDepositedValue);
             document.getElementById('total-repair-cost').textContent = formatSilver(totalRepairCost);
             document.getElementById('total-guild-profit').textContent = formatSilver(totalGuildProfit);
-            
             document.getElementById('daily-profit').textContent = formatSilver(dailyProfit);
             document.getElementById('weekly-profit').textContent = formatSilver(weeklyProfit);
             document.getElementById('monthly-profit').textContent = formatSilver(monthlyProfit);
-
-            const renderTopList = (el, data, topN = 5) => {
-                const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN);
-                if (sorted.length === 0) {
-                     el.innerHTML = '<p class="text-center text-gray-400">Veri yok.</p>';
-                     return;
-                }
-                el.innerHTML = sorted.map(([name, amount]) => `
-                    <div class="flex justify-between text-sm">
-                        <p>${name}</p>
-                        <p class="font-semibold text-gray-300">${formatSilver(amount)}</p>
-                    </div>`).join('');
-            };
-            
+            const renderTopList = (el, data, topN = 5) => { const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN); if (sorted.length === 0) { el.innerHTML = '<p class="text-center text-gray-400">Veri yok.</p>'; return; } el.innerHTML = sorted.map(([name, amount]) => `<div class="flex justify-between text-sm"><p>${name}</p><p class="font-semibold text-gray-300">${formatSilver(amount)}</p></div>`).join(''); };
             renderTopList(document.getElementById('top-depositors'), depositors);
             renderTopList(document.getElementById('top-withdrawers'), withdrawers);
         }
 
-        // --- GUILD & AYARLAR YÖNETİMİ ---
+        async function loadRegistrationLogs() {
+            const logsListEl = document.getElementById('registration-logs-list');
+            logsListEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>`;
+            const logsQuery = query(collection(db, `artifacts/${appId}/public/data/registration_logs`), orderBy("timestamp", "desc"));
+            onSnapshot(logsQuery, (snapshot) => {
+                if (snapshot.empty) { logsListEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Henüz bir kayıt logu yok.</td></tr>`; return; }
+                logsListEl.innerHTML = snapshot.docs.map(doc => { const data = doc.data(); const date = data.timestamp?.toDate()?.toLocaleString('tr-TR') || 'Bilinmiyor'; return `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50"><td class="px-6 py-4 font-medium text-white">${data.discordUsername} <span class="text-gray-400 text-xs">(${data.discordId})</span></td><td class="px-6 py-4">${data.inGameName}</td><td class="px-6 py-4">${date}</td></tr>`; }).join('');
+            });
+        }
+
         async function loadGuildSettings() {
             const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
             const docSnap = await getDoc(settingsRef);
-            if (docSnap.exists() && docSnap.data().taxRate !== undefined) {
-                guildSettings = docSnap.data();
-            }
+            if (docSnap.exists() && docSnap.data().taxRate !== undefined) { guildSettings = docSnap.data(); }
             const purchaseRate = Math.round((1 - guildSettings.taxRate) * 100);
             document.getElementById('purchase-rate-input').value = purchaseRate;
         }
 
         document.getElementById('save-settings-button').addEventListener('click', async () => {
             const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value);
-            if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) {
-                return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true);
-            }
+            if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true);
             const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15));
             const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
             await setDoc(settingsRef, { taxRate: taxRate }, { merge: true });
@@ -549,8 +400,7 @@
 
         document.getElementById('update-guild-members-button').addEventListener('click', async () => {
             const button = document.getElementById('update-guild-members-button');
-            button.disabled = true;
-            button.textContent = "Güncelleniyor...";
+            button.disabled = true; button.textContent = "Güncelleniyor...";
             try {
                 const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`;
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
@@ -558,7 +408,6 @@
                 if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`);
                 const members = await response.json();
                 if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası.");
-                
                 const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
                 const batch = writeBatch(db);
                 let newMemberCount = 0;
@@ -566,23 +415,17 @@
                     const memberNameLower = member.Name.toLowerCase();
                     const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower));
                     const snapshot = await getDocs(q);
-                    if (snapshot.empty) {
-                        const newUserRef = doc(usersRef);
-                        batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() });
-                        newMemberCount++;
-                    }
+                    if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; }
                 }
                 await batch.commit();
                 showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`);
             } catch (error) {
                 showNotification(`Hata: ${error.message}`, true);
             } finally {
-                 button.disabled = false;
-                 button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et";
+                 button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et";
             }
         });
         
-        // --- UYGULAMA BAŞLANGICI ---
         async function initializeAppAndAuth() {
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
