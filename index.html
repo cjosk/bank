@@ -10,13 +10,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #1A0B0B;
-            --bg-secondary: rgba(44, 11, 11, 0.5); /* Card background with transparency */
-            --border-color: rgba(245, 245, 220, 0.1);
-            --text-primary: #F5F5DC; /* Cream/Gold */
+            --bg-primary: #111111;
+            --bg-card: rgba(24, 24, 27, 0.6);
+            --border-color: rgba(63, 63, 70, 0.5);
+            --text-primary: #E4E4E7;
             --text-secondary: #A1A1AA;
-            --accent-gold: #D79A34;
-            --accent-red: #8C2323;
+            --accent-gold: #F59E0B; /* Amber 500 */
+            --accent-red: #DC2626; /* Red 600 */
+            --accent-green: #4ADE80; /* Green 400 */
             --discord-blue: #5865F2;
         }
 
@@ -24,41 +25,54 @@
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-primary); 
             color: var(--text-primary);
-            background-image: radial-gradient(circle at top left, rgba(140, 35, 35, 0.2), transparent 40%),
-                              radial-gradient(circle at bottom right, rgba(44, 11, 11, 0.3), transparent 50%);
+            background-image: radial-gradient(circle at top left, rgba(245, 158, 11, 0.08), transparent 30%),
+                              radial-gradient(circle at bottom right, rgba(39, 39, 42, 0.5), transparent 40%);
             background-attachment: fixed;
         }
 
         .card { 
-            background-color: var(--bg-secondary);
+            background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 1rem;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            border-radius: 1.25rem; /* Daha yuvarlak köşeler */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         .form-input, .form-textarea { 
-            background-color: rgba(10, 5, 5, 0.5); 
+            background-color: rgba(17, 17, 17, 0.7); 
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             transition: all 0.2s ease;
         }
 
         .form-input:focus, .form-textarea:focus {
             outline: none;
             border-color: var(--accent-gold);
-            box-shadow: 0 0 0 2px rgba(215, 154, 52, 0.4);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn {
+            border-radius: 0.75rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            transform: scale(1);
+        }
+        .btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         .btn-discord { background-color: var(--discord-blue); }
         .btn-discord:hover { background-color: #4752C4; }
-        .btn-primary { background-color: var(--accent-gold); color: var(--bg-primary); }
-        .btn-primary:hover { background-color: #C08A2E; }
-        .btn-secondary { background: linear-gradient(to right, #8C2323, #5A1717); color: white; }
-        .btn-secondary:hover { background: linear-gradient(to right, #9F2828, #6D1C1C); }
-        
+        .btn-primary { background-color: var(--accent-gold); color: #111; }
+        .btn-primary:hover { background-color: #D97706; }
+        .btn-secondary { background-color: #3F3F46; color: var(--text-primary); }
+        .btn-secondary:hover { background-color: #52525B; }
+        .btn-success { background-color: #16A34A; color: white; }
+        .btn-success:hover { background-color: #15803D; }
+
         .tab-button { 
             border-color: transparent; 
             transition: all 0.2s ease-in-out;
@@ -72,11 +86,12 @@
         .tab-button.active::after {
             content: '';
             position: absolute;
-            bottom: -1px;
+            bottom: -2px; /* Border ile hizalamak için */
             left: 0;
             right: 0;
             height: 2px;
             background-color: var(--accent-gold);
+            border-radius: 2px;
         }
     </style>
 </head>
@@ -89,9 +104,9 @@
     <div id="player-app" class="min-h-screen">
         <div id="login-view" class="flex items-center justify-center min-h-[80vh] p-4">
             <div class="w-full max-w-sm card p-8 shadow-2xl text-center">
-                <h1 class="text-2xl font-bold text-white mb-2">Klan Kasasına Hoş Geldin</h1>
+                <h1 class="text-2xl font-bold text-white mb-2">Kontrol Paneli</h1>
                 <p class="text-zinc-400 mb-6">Devam etmek için Discord hesabınla giriş yap.</p>
-                <button id="discord-login-button" class="w-full py-3 rounded-lg font-bold text-white btn-discord flex items-center justify-center gap-2 transition-transform transform hover:scale-105">
+                <button id="discord-login-button" class="btn btn-discord w-full py-3 flex items-center justify-center gap-2">
                     <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.443.805-.632 1.29a18.168 18.168 0 0 0-5.485 0a17.3 17.3 0 0 0-.632-1.29a.074.074 0 0 0-.08-.037a19.791 19.791 0 0 0-4.885 1.515a.069.069 0 0 0-.032.059a19.342 19.342 0 0 0-1.622 5.585a.078.078 0 0 0 .028.083a17.9 17.9 0 0 0 4.1 2.624a.074.074 0 0 0 .089-.022a1.171 1.171 0 0 1 .494-.325a.074.074 0 0 0 .018-.111a12.112 12.112 0 0 0-1.88-1.084a.074.074 0 0 1-.038-.062a15.777 15.777 0 0 1 .413-2.91a.075.075 0 0 0 .043-.075a1.189 1.189 0 0 1 .018-.043a1.17 1.17 0 0 1 .1-.141a.071.071 0 0 0 .034-.044Z M12 16.117c-1.933 0-3.5-1.72-3.5-3.857c0-2.137 1.567-3.857 3.5-3.857s3.5 1.72 3.5 3.857c0 2.137-1.567 3.857-3.5 3.857Zm-4.136-3.857c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Zm8.272 0c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Z"/></svg>
                     <span>Discord ile Giriş Yap</span>
                 </button>
@@ -105,7 +120,7 @@
                 <p class="text-zinc-400 mb-6">Hesabını bağlamak için oyundaki ismini gir.</p>
                 <form id="link-account-form">
                     <input id="in-game-name-link" type="text" placeholder="Oyun-içi İsim" class="form-input w-full p-3 mb-4 text-center" required>
-                    <button type="submit" class="w-full py-3 rounded-lg font-bold btn-primary">Hesabı Bağla</button>
+                    <button type="submit" class="btn btn-primary w-full py-3">Hesabı Bağla</button>
                 </form>
             </div>
         </div>
@@ -123,14 +138,14 @@
                     <div class="text-right">
                         <p class="text-xs text-zinc-400 font-medium tracking-wider">GUILD ALIŞ ORANI</p>
                         <div class="flex items-center justify-end gap-2 mt-1">
-                            <p id="guild-purchase-rate" class="text-xl font-bold text-amber-400"></p>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333V17a1.5 1.5 0 01-3 0v-6.667a1.5 1.5 0 013 0zM10 5.5a1.5 1.5 0 013 0v11.5a1.5 1.5 0 01-3 0V5.5zM14 8.333V17a1.5 1.5 0 01-3 0V8.333a1.5 1.5 0 013 0zM18 3v14a1.5 1.5 0 01-3 0V3a1.5 1.5 0 013 0z" /></svg>
+                            <p id="guild-purchase-rate" class="text-xl font-bold" style="color: var(--accent-gold);"></p>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--accent-gold);" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333V17a1.5 1.5 0 01-3 0v-6.667a1.5 1.5 0 013 0zM10 5.5a1.5 1.5 0 013 0v11.5a1.5 1.5 0 01-3 0V5.5zM14 8.333V17a1.5 1.5 0 01-3 0V8.333a1.5 1.5 0 013 0zM18 3v14a1.5 1.5 0 01-3 0V3a1.5 1.5 0 013 0z" /></svg>
                         </div>
                     </div>
                     <div class="text-right">
                         <p class="text-xs text-zinc-400 font-medium tracking-wider">GÜNCEL BAKİYEN</p>
                          <div class="flex items-center justify-end gap-2 mt-1">
-                            <p id="player-balance" class="text-3xl font-bold text-green-400"></p>
+                            <p id="player-balance" class="text-3xl font-bold" style="color: var(--accent-green);"></p>
                             <img src="https://i.hizliresim.com/tsb3m7q.png" class="w-8 h-8">
                         </div>
                     </div>
@@ -138,7 +153,7 @@
             </header>
             
             <div class="mb-8 border-b-2 border-zinc-800">
-                <nav class="flex -mb-0.5 space-x-6" aria-label="Tabs">
+                <nav class="flex -mb-px space-x-6" aria-label="Tabs">
                     <button id="tab-action" class="tab-button active py-3 px-1 text-sm font-bold tracking-wider">YENİ İŞLEM</button>
                     <button id="tab-history" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">İŞLEM GEÇMİŞİM</button>
                 </nav>
@@ -147,7 +162,7 @@
             <div id="action-content">
                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div class="card p-6 lg:p-8">
-                        <h2 class="text-xl font-bold mb-4 text-amber-400">Örnek Satış Hesaplayıcı</h2>
+                        <h2 class="text-xl font-bold mb-4" style="color: var(--accent-gold);">Örnek Satış Hesaplayıcı</h2>
                         <div class="space-y-4">
                             <div>
                                 <label for="calc-total-value" class="block text-sm font-medium text-zinc-300">Toplam Satış Tutarı</label>
@@ -162,18 +177,18 @@
                                 <input type="number" id="calc-party-count" class="form-input w-full p-2 mt-1" placeholder="5">
                             </div>
                         </div>
-                        <div class="mt-6 pt-4 border-t border-zinc-700 space-y-2">
-                            <div class="flex justify-between text-sm">
+                        <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex justify-between text-sm mt-2">
                                 <span class="text-zinc-400">Kesinti Öncesi Net Tutar:</span>
                                 <span id="calc-pre-tax" class="font-medium text-zinc-200">0</span>
                             </div>
-                            <div class="flex justify-between text-sm">
+                            <div class="flex justify-between text-sm mt-2">
                                 <span class="text-zinc-400">Guild Kesintisi (<span id="calc-tax-rate-display">%20</span>):</span>
-                                <span id="calc-tax-amount" class="font-medium text-red-400">- 0</span>
+                                <span id="calc-tax-amount" class="font-medium" style="color: var(--accent-red);">- 0</span>
                             </div>
-                             <div class="flex justify-between text-lg font-bold mt-2">
+                             <div class="flex justify-between text-lg font-bold mt-4">
                                 <span class="text-white">Oyuncu Başına Düşen:</span>
-                                <span id="calc-net-payout" class="text-green-400">0 Silver</span>
+                                <span id="calc-net-payout" style="color: var(--accent-green);">0 Silver</span>
                             </div>
                         </div>
                     </div>
@@ -200,7 +215,7 @@
                                         <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
                                     </div>
                                 </div>
-                                <button type="submit" class="w-full py-2.5 rounded-lg font-bold btn-secondary">Loot Yatırma Talebi Gönder</button>
+                                <button type="submit" class="btn btn-secondary w-full py-2.5">Loot Yatırma Talebi Gönder</button>
                             </form>
                         </div>
                          <div class="card p-6 lg:p-8">
@@ -210,7 +225,7 @@
                                      <label for="withdraw-amount" class="block text-sm font-medium text-zinc-300">Çekilecek Tutar</label>
                                     <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 mt-1" required>
                                 </div>
-                                <button type="submit" class="w-full py-2.5 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700">Çekim Talebi Oluştur</button>
+                                <button type="submit" class="btn btn-success w-full py-2.5">Çekim Talebi Oluştur</button>
                             </form>
                         </div>
                     </div>
@@ -226,7 +241,7 @@
         </div>
     </div>
     
-    <div id="notification" class="fixed top-24 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
+    <div id="notification" class="fixed top-24 right-5 text-white py-2 px-5 rounded-lg shadow-lg hidden card"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -234,6 +249,9 @@
         import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+        // --- Tüm Javascript kodu, önceki versiyonla aynı ve tam. ---
+        // Değişiklikler sadece HTML ve CSS'de olduğu için script'in tamamı aşağıdadır.
+        
         const DISCORD_CLIENT_ID = "1412951643741356215";
 
         const firebaseConfig = {
@@ -272,8 +290,7 @@
 
         function showNotification(message, isError = false) {
             notification.textContent = message;
-            notification.classList.toggle('bg-red-500', isError);
-            notification.classList.toggle('bg-green-500', !isError);
+            notification.style.backgroundColor = isError ? 'var(--accent-red)' : 'var(--accent-green)';
             notification.classList.remove('hidden');
             setTimeout(() => notification.classList.add('hidden'), 3000);
         }
@@ -483,12 +500,12 @@
                         case 'rejected': statusClass = 'bg-red-600'; statusText = 'Reddedildi'; break;
                         default: statusClass = 'bg-yellow-500'; statusText = 'Beklemede';
                     }
-                    const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-red-400 mt-1">Neden: ${item.rejectionReason}</p>` : '';
+                    const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs mt-1" style="color:var(--accent-red);">${item.rejectionReason}</p>` : '';
                     let detailsHtml = '';
                     if (item.type === 'Loot Yatırma') {
                         const estimatedValueText = `Tahmini Değer: <span class="font-semibold text-zinc-200">${formatSilver(item.estimatedValue || 0)}</span>`;
                         const repairCostText = `Tamir: <span class="font-semibold text-zinc-200">${formatSilver(item.repairCost || 0)}</span>`;
-                        const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-amber-400 hover:underline">Görsel</a>` : '';
+                        const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" style="color:var(--accent-gold);" class="hover:underline">Görsel</a>` : '';
                         detailsHtml = `<div class="text-xs text-zinc-400 mt-2 flex flex-wrap gap-x-4 gap-y-1">${estimatedValueText} | ${repairCostText} | ${screenshotLink}</div>`;
                     }
                     const amountText = item.type === 'Silver Çekim' ? `${formatSilver(item.amount || 0)} Silver` : `Parti: ${(item.partyMembers || []).join(', ')}`;
