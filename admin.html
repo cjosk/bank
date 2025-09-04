@@ -13,7 +13,7 @@
         .btn-action { background-color: #4a5568; border: 1px solid #718096; }
         .tab-button { border-color: transparent; }
         .tab-button.active { border-color: #4f46e5; color: white; }
-        .modal-backdrop { background-color: rgba(0,0,0,0.7); display: flex; }
+        .modal-backdrop { background-color: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; }
         .loader {
             border: 4px solid #f3f3f3; /* Light grey */
             border-top: 4px solid #4f46e5; /* Blue */
@@ -40,7 +40,7 @@
         </div>
         
         <div id="admin-dashboard-view" class="hidden w-full max-w-7xl mx-auto">
-            <header class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
+             <header class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
                 <h1 class="text-3xl font-bold text-white">Yönetici Paneli</h1>
                 <button id="admin-logout-button" class="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700">Çıkış Yap</button>
             </header>
@@ -58,7 +58,7 @@
             </div>
 
             <div id="requests-content" class="tab-content">
-                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
                         <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
@@ -77,8 +77,7 @@
                     <textarea id="log-input" rows="10" class="form-textarea w-full rounded-lg" placeholder='"Date"	"Player"	"Item"...'></textarea>
                     <button id="analyze-log-button" class="mt-4 px-5 py-2 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700">Loot'u Analiz Et</button>
                 </div>
-                <div id="optimization-results" class="mt-8">
-                </div>
+                <div id="optimization-results" class="mt-8"></div>
             </div>
             
             <div id="history-content" class="tab-content hidden">
@@ -141,7 +140,7 @@
                 </div>
             </div>
 
-            <div id="logs-content" class="tab-content hidden">
+             <div id="logs-content" class="tab-content hidden">
                 <h2 class="text-2xl font-bold text-white mb-4">Discord - Oyun Nick Eşleşme Logları</h2>
                 <div class="card rounded-lg overflow-hidden">
                     <table class="w-full text-sm text-left text-gray-300">
@@ -174,9 +173,23 @@
         </div>
     </div>
     
+    <div id="price-details-modal" class="fixed inset-0 hidden modal-backdrop z-50">
+        <div class="card w-full max-w-md p-6 rounded-lg shadow-lg relative">
+             <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+             <div class="flex items-center gap-4 mb-4">
+                <img id="modal-item-image" src="" class="w-16 h-16 bg-black/20 rounded-md">
+                <div>
+                    <h3 id="modal-item-name" class="text-lg font-bold"></h3>
+                    <p id="modal-item-details" class="text-sm text-gray-400"></p>
+                </div>
+             </div>
+             <div id="modal-price-list" class="space-y-2"></div>
+        </div>
+    </div>
+
     <div id="rejection-modal" class="fixed inset-0 items-center justify-center hidden modal-backdrop z-50">
         <div class="card w-full max-w-md p-6 rounded-lg shadow-lg">
-            <h2 class="text-xl font-bold mb-4">Talebi Reddet</h2>
+            <h2 class="text-2xl font-bold mb-4">Talebi Reddet</h2>
             <p class="text-gray-300 mb-4">Oyuncunun nedenini görebilmesi için bir red sebebi girin.</p>
             <textarea id="rejection-reason" rows="3" class="form-textarea w-full p-2 rounded-md mb-4" placeholder="Örn: Ekran görüntüsü okunaklı değil."></textarea>
             <div class="flex justify-end gap-4">
@@ -196,7 +209,7 @@
         const DISCORD_CLIENT_ID = "1412951643741356215";
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
         let guildSettings = { taxRate: 0.20 };
-
+        
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
           authDomain: "bank-8738a.firebaseapp.com",
@@ -453,17 +466,17 @@
                     const itemsToPrice = {};
                     lines.forEach(line => {
                         const parts = line.replace(/"/g, '').split('\t'); if (parts.length < 6) return;
-                        const itemName = parts[2].toLowerCase();
+                        const itemName = parts[2].toLowerCase().trim();
                         const enchantment = parseInt(parts[3] || '0');
                         const quality = parseInt(parts[4] || '1');
                         const amount = parseInt(parts[5] || '1');
                         const uniqueKey = `${itemName}@${enchantment}q${quality}`;
                         if (itemsToPrice[uniqueKey]) { itemsToPrice[uniqueKey].amount += amount; } 
-                        else { itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount }; }
+                        else { itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount, fullName: parts[2] }; }
                     });
 
-                    const ITEM_ID_MAP = { "adept's bag": "T4_BAG", "adept's lymhurst cape": "T4_CAPE_LYMHURST", "grandmaster's cleric robe": "T7_ARMOR_CLOTH_HEAL", "elder's stalker shoes": "T8_SHOES_LEATHER_STALKER", "grandmaster's damnation staff": "T7_2H_CURSEDSTAFF_MORGANA", "adept's smuggler cape": "T4_CAPE_THETFORD", "adept's mistcaller": "T4_OFF_MISTCALLER", "adept's mage cowl": "T4_HEAD_CLOTH_MAGE", "elder's fort sterling cape": "T8_CAPE_FORTSTERLING", "holy fetish": "T4_ARTEFACT_2H_HOLYSTAFF_HELL", "pork omelette": "T3_MEAL_OMELETTE"};
-                    const itemIds = Object.values(itemsToPrice).map(item => ITEM_ID_MAP[item.itemName]).filter(Boolean).join(',');
+                    const ITEM_ID_MAP = {"adept's bag": "T4_BAG", "adept's lymhurst cape": "T4_CAPE_LYMHURST", "grandmaster's cleric robe": "T7_ARMOR_CLOTH_HEAL", "elder's stalker shoes": "T8_SHOES_LEATHER_STALKER", "grandmaster's damnation staff": "T7_2H_CURSEDSTAFF_MORGANA", "adept's smuggler cape": "T4_CAPE_THETFORD", "adept's mistcaller": "T4_OFF_MISTCALLER", "adept's mage cowl": "T4_HEAD_CLOTH_MAGE", "elder's fort sterling cape": "T8_CAPE_FORTSTERLING", "holy fetish": "T4_ARTEFACT_2H_HOLYSTAFF_HELL", "pork omelette": "T3_MEAL_OMELETTE"};
+                    const itemIds = [...new Set(Object.values(itemsToPrice).map(item => ITEM_ID_MAP[item.itemName]).filter(Boolean))].join(',');
                     if (!itemIds) throw new Error("Log'da bilinen bir item bulunamadı.");
 
                     const locations = "Black Market,Bridgewatch,Caerleon,Fort Sterling,Lymhurst,Martlock,Thetford";
@@ -473,23 +486,32 @@
                     const priceData = await priceResponse.json();
 
                     const cityGroups = {};
+                    const unpricedItems = [];
                     Object.values(itemsToPrice).forEach(item => {
                         const itemId = ITEM_ID_MAP[item.itemName]; if (!itemId) return;
                         let bestCity = null; let maxPrice = 0;
+                        const allPrices = {};
+                        locations.split(',').forEach(city => allPrices[city] = 0);
                         priceData.forEach(priceEntry => {
-                            if (priceEntry.item_id === itemId && priceEntry.quality === item.quality && priceEntry.sell_price_min > maxPrice) {
-                                maxPrice = priceEntry.sell_price_min; bestCity = priceEntry.city;
+                            if (priceEntry.item_id === itemId && priceEntry.quality === item.quality) {
+                                allPrices[priceEntry.city] = priceEntry.sell_price_min;
+                                if (priceEntry.sell_price_min > maxPrice) {
+                                    maxPrice = priceEntry.sell_price_min; bestCity = priceEntry.city;
+                                }
                             }
                         });
+                        const itemData = { ...item, allPrices };
                         if (bestCity && maxPrice > 0) {
                             if (!cityGroups[bestCity]) cityGroups[bestCity] = { items: [], totalValue: 0 };
                             const itemValue = maxPrice * item.amount;
-                            cityGroups[bestCity].items.push({ ...item, price: maxPrice, value: itemValue });
+                            cityGroups[bestCity].items.push({ ...itemData, price: maxPrice, value: itemValue });
                             cityGroups[bestCity].totalValue += itemValue;
+                        } else {
+                            unpricedItems.push(itemData);
                         }
                     });
                     
-                    if (Object.keys(cityGroups).length === 0) { optimizationResultsEl.innerHTML = `<p class="text-center text-zinc-400 p-8">Karlı bir satış lokasyonu bulunamadı.</p>`; return; }
+                    if (Object.keys(cityGroups).length === 0 && unpricedItems.length === 0) { optimizationResultsEl.innerHTML = `<p class="text-center text-zinc-400 p-8">Analiz edilecek veri bulunamadı.</p>`; return; }
                     let html = '';
                     for (const city in cityGroups) {
                         const group = cityGroups[city];
@@ -498,7 +520,19 @@
                             const itemId = ITEM_ID_MAP[item.itemName];
                             const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
                             const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
-                            html += `<div class="card flex items-center p-3 gap-3"><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.itemName}">${item.itemName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p><p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p></div></div>`;
+                            const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`;
+                            html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p><p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p></div></div>`;
+                        });
+                        html += `</div></div>`;
+                    }
+                    if(unpricedItems.length > 0) {
+                        html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">Satış Emri Olmayan Ürünler</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
+                        unpricedItems.forEach(item => {
+                            const itemId = ITEM_ID_MAP[item.itemName];
+                            const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
+                            const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
+                            const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`;
+                            html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition opacity-60" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p></div></div>`;
                         });
                         html += `</div></div>`;
                     }
@@ -510,6 +544,10 @@
                 }
             });
 
+            document.getElementById('close-price-modal').addEventListener('click', () => {
+                document.getElementById('price-details-modal').classList.add('hidden');
+            });
+            
             async function initializeAppAndAuth() {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
