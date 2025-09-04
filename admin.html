@@ -174,7 +174,7 @@
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- AYARLAR ---
-        const ADMIN_PASSWORD = "166516";
+        const ADMIN_PASSWORD = "KLAN_SIFRESI_123";
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
         let guildSettings = { taxRate: 0.20 };
 
@@ -388,54 +388,89 @@
             document.getElementById('purchase-rate-input').value = purchaseRate;
         }
 
-        document.getElementById('save-settings-button').addEventListener('click', async () => {
-            const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value);
-            if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true);
-            const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15));
-            const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
-            await setDoc(settingsRef, { taxRate: taxRate }, { merge: true });
-            await loadGuildSettings();
-            showNotification("Ayarlar başarıyla kaydedildi.");
-        });
-
-        document.getElementById('update-guild-members-button').addEventListener('click', async () => {
-            const button = document.getElementById('update-guild-members-button');
-            button.disabled = true; button.textContent = "Güncelleniyor...";
-            try {
-                const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`;
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`);
-                const members = await response.json();
-                if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası.");
-                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
-                const batch = writeBatch(db);
-                let newMemberCount = 0;
-                for (const member of members) {
-                    const memberNameLower = member.Name.toLowerCase();
-                    const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower));
-                    const snapshot = await getDocs(q);
-                    if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; }
+        // --- DÜZENLENMİŞ EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM hazır olduğunda tüm event listener'ları güvenle ekle
+            document.getElementById('admin-login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (document.getElementById('admin-password').value === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('isAdminAuthenticated', 'true');
+                    showDashboard();
+                } else {
+                    showNotification("Yanlış şifre!", true);
                 }
-                await batch.commit();
-                showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`);
-            } catch (error) {
-                showNotification(`Hata: ${error.message}`, true);
-            } finally {
-                 button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et";
+            });
+
+            document.getElementById('admin-logout-button').addEventListener('click', () => {
+                sessionStorage.removeItem('isAdminAuthenticated');
+                window.location.reload();
+            });
+
+            document.getElementById('cancel-rejection').addEventListener('click', () => {
+                rejectionModal.classList.add('hidden');
+            });
+
+            document.getElementById('confirm-rejection').addEventListener('click', async () => {
+                const reason = document.getElementById('rejection-reason').value.trim();
+                if (!reason) return showNotification("Lütfen bir red sebebi girin.", true);
+                const { collectionName, id } = rejectionInfo;
+                const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id);
+                await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason, processedAt: serverTimestamp() }).commit();
+                showNotification("Talep reddedildi.");
+                rejectionModal.classList.add('hidden');
+                document.getElementById('rejection-reason').value = '';
+            });
+
+             document.getElementById('save-settings-button').addEventListener('click', async () => {
+                const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value);
+                if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true);
+                const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15));
+                const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
+                await setDoc(settingsRef, { taxRate: taxRate }, { merge: true });
+                await loadGuildSettings();
+                showNotification("Ayarlar başarıyla kaydedildi.");
+            });
+
+            document.getElementById('update-guild-members-button').addEventListener('click', async () => {
+                const button = document.getElementById('update-guild-members-button');
+                button.disabled = true; button.textContent = "Güncelleniyor...";
+                try {
+                    const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`;
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
+                    const response = await fetch(proxyUrl);
+                    if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`);
+                    const members = await response.json();
+                    if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası.");
+                    const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                    const batch = writeBatch(db);
+                    let newMemberCount = 0;
+                    for (const member of members) {
+                        const memberNameLower = member.Name.toLowerCase();
+                        const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower));
+                        const snapshot = await getDocs(q);
+                        if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; }
+                    }
+                    await batch.commit();
+                    showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`);
+                } catch (error) {
+                    showNotification(`Hata: ${error.message}`, true);
+                } finally {
+                     button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et";
+                }
+            });
+            
+            // --- UYGULAMA BAŞLANGICI ---
+            async function initializeAppAndAuth() {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                try { await signInAnonymously(auth); } catch (error) { console.error("Admin auth error", error); }
+                if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+                    showDashboard();
+                }
             }
+            initializeAppAndAuth();
         });
-        
-        async function initializeAppAndAuth() {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            try { await signInAnonymously(auth); } catch (error) { console.error("Admin auth error", error); }
-            if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
-                showDashboard();
-            }
-        }
-        initializeAppAndAuth();
     </script>
 </body>
 </html>
