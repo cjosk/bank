@@ -58,28 +58,132 @@
             </div>
 
             <div id="requests-content" class="tab-content">
-                 <!-- ... İçerik ... -->
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
+                        <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Çekim Talepleri</h2>
+                        <div id="withdraw-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
+                    </div>
+                </div>
             </div>
 
             <div id="optimization-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-white mb-4">Satış Optimizasyonu</h2>
+                <h2 class="text-2xl font-bold text-white mb-4">Satış Optimizasyonu (Europe Sunucusu)</h2>
                 <div class="card p-6 rounded-lg">
                     <label for="log-input" class="block text-sm font-medium mb-2">Oyun İçi Tab Logunu Buraya Yapıştırın</label>
-                    <textarea id="log-input" rows="10" class="form-textarea w-full rounded-lg" placeholder='"Date" "Player" "Item"...'></textarea>
+                    <textarea id="log-input" rows="10" class="form-textarea w-full rounded-lg" placeholder='"Date"	"Player"	"Item"...'></textarea>
                     <button id="analyze-log-button" class="mt-4 px-5 py-2 rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700">Loot'u Analiz Et</button>
                 </div>
                 <div id="optimization-results" class="mt-8">
-                    <!-- Sonuçlar buraya gelecek -->
+                </div>
+            </div>
+            
+            <div id="history-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
+                 <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <input type="text" id="history-search-name" class="form-input flex-grow p-2 rounded-md" placeholder="Oyuncu adına göre ara...">
+                    <input type="date" id="history-search-date" class="form-input p-2 rounded-md">
+                </div>
+                <div id="history-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Geçmiş yükleniyor...</p></div>
+            </div>
+
+            <div id="reports-content" class="tab-content hidden">
+                 <h2 class="text-2xl font-bold text-white mb-4">Genel Raporlar</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Yatırılan Toplam Loot</p>
+                        <p id="total-deposited-value" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Toplam Tamir Masrafı</p>
+                        <p id="total-repair-cost" class="text-2xl font-bold">0</p>
+                    </div>
+                     <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Toplam Guild Kârı</p>
+                        <p id="total-guild-profit" class="text-2xl font-bold text-green-400">0</p>
+                    </div>
+                 </div>
+                 <h2 class="text-2xl font-bold text-white mb-4">Kâr Analizi</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Günlük Kâr (Bugün)</p>
+                        <p id="daily-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                    <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Haftalık Kâr (Son 7 Gün)</p>
+                        <p id="weekly-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                     <div class="card p-4 rounded-lg text-center">
+                        <p class="text-sm text-gray-400">Aylık Kâr (Son 30 Gün)</p>
+                        <p id="monthly-profit" class="text-2xl font-bold">0</p>
+                    </div>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">En Çok Loot Yatıranlar (Net Kazanç)</h3>
+                        <div id="top-depositors" class="space-y-2"><p class="text-center text-gray-400">Veri yok.</p></div>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-bold mb-2">En Çok Çekim Yapanlar</h3>
+                        <div id="top-withdrawers" class="space-y-2"><p class="text-center text-gray-400">Veri yok.</p></div>
+                    </div>
+                 </div>
+            </div>
+            
+            <div id="guild-content" class="tab-content hidden">
+                 <div class="card p-6 rounded-lg">
+                    <h2 class="text-xl font-bold text-white mb-4">Guild Yönetimi</h2>
+                    <p class="text-gray-300 mb-4">Yeni üyeleri sisteme kaydetmek veya mevcut üyeleri senkronize etmek için aşağıdaki butonu kullanın.</p>
+                    <button id="update-guild-members-button" class="btn-action w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white">Klan Üyelerini Veritabanıyla Senkronize Et</button>
                 </div>
             </div>
 
-            <!-- ... Diğer tüm tab içerikleri ... -->
+            <div id="logs-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Discord - Oyun Nick Eşleşme Logları</h2>
+                <div class="card rounded-lg overflow-hidden">
+                    <table class="w-full text-sm text-left text-gray-300">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Discord Kullanıcısı</th>
+                                <th scope="col" class="px-6 py-3">Oyun-içi İsim</th>
+                                <th scope="col" class="px-6 py-3">Kayıt Tarihi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registration-logs-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
+            <div id="settings-content" class="tab-content hidden">
+                <div class="card p-6 rounded-lg max-w-lg mx-auto">
+                   <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
+                   <div class="space-y-4">
+                       <div>
+                           <label for="purchase-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Alış Oranı (%)</label>
+                           <input id="purchase-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 80" class="form-input w-full p-2 rounded-md">
+                           <p class="text-xs text-gray-400 mt-1">Loot'un net değerinin yüzde kaçının oyunculara ödeneceğini belirtir. (Kesinti = 100 - Alış Oranı)</p>
+                       </div>
+                       <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
+                   </div>
+               </div>
+           </div>
         </div>
     </div>
     
     <div id="rejection-modal" class="fixed inset-0 items-center justify-center hidden modal-backdrop z-50">
-        <!-- ... İçerik ... -->
+        <div class="card w-full max-w-md p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-bold mb-4">Talebi Reddet</h2>
+            <p class="text-gray-300 mb-4">Oyuncunun nedenini görebilmesi için bir red sebebi girin.</p>
+            <textarea id="rejection-reason" rows="3" class="form-textarea w-full p-2 rounded-md mb-4" placeholder="Örn: Ekran görüntüsü okunaklı değil."></textarea>
+            <div class="flex justify-end gap-4">
+                <button id="cancel-rejection" class="px-4 py-2 rounded-md">İptal</button>
+                <button id="confirm-rejection" class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700">Reddet</button>
+            </div>
+        </div>
     </div>
 
     <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden"></div>
@@ -89,107 +193,316 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- AYARLAR ---
         const DISCORD_CLIENT_ID = "1412951643741356215";
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
-        // ...
+        let guildSettings = { taxRate: 0.20 };
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
+          authDomain: "bank-8738a.firebaseapp.com",
+          projectId: "bank-8738a",
+          storageBucket: "bank-8738a.firebasestorage.app",
+          messagingSenderId: "157747262596",
+          appId: "1:157747262596:web:1f60a45a33c0c5a702fed1",
+          measurementId: "G-T8Z3R2X6DJ"
+        };
+        
+        const appId = firebaseConfig.appId || 'default-albion-app'; 
+        let app, auth, db;
         
         document.addEventListener('DOMContentLoaded', () => {
-            // ... (Tüm eski kodlar burada)
+            const adminLoginView = document.getElementById('admin-login-view');
+            const adminDashboardView = document.getElementById('admin-dashboard-view');
+            const notification = document.getElementById('notification');
+            const tabs = document.querySelectorAll('.tab-button');
+            const contents = document.querySelectorAll('.tab-content');
+            const rejectionModal = document.getElementById('rejection-modal');
+            let rejectionInfo = {};
 
-            // --- YENİ BÖLÜM: SATIŞ OPTİMİZASYONU ---
-            const analyzeLogButton = document.getElementById('analyze-log-button');
-            const logInput = document.getElementById('log-input');
-            const optimizationResultsEl = document.getElementById('optimization-results');
+            function formatSilver(num) {
+                num = Number(num);
+                if (isNaN(num)) return '0';
+                if (Math.abs(num) >= 1000000) return (num / 1000000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'M';
+                if (Math.abs(num) >= 1000) return (num / 1000).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'K';
+                return num.toLocaleString('tr-TR');
+            }
 
-            // Item adı -> Benzersiz ID eşleşmesi için küçük bir harita.
-            // Gerçek bir uygulamada bu çok daha büyük bir JSON dosyasından çekilirdi.
-            const ITEM_ID_MAP = {
-                "adept's bag": "T4_BAG",
-                "adept's lymhurst cape": "T4_CAPE_LYMHURST",
-                "grandmaster's cleric robe": "T7_ARMOR_CLOTH_HEAL",
-                "elder's stalker shoes": "T8_SHOES_LEATHER_STALKER",
-                "grandmaster's damnation staff": "T7_2H_CURSEDSTAFF_MORGANA",
-                "adept's smuggler cape": "T4_CAPE_THETFORD",
-                "adept's mistcaller": "T4_OFF_MISTCALLER",
-                "adept's mage cowl": "T4_HEAD_CLOTH_MAGE",
-                "elder's fort sterling cape": "T8_CAPE_FORTSTERLING",
-                "holy fetish": "T4_ARTEFACT_2H_HOLYSTAFF_HELL",
-                "pork omelette": "T3_MEAL_OMELETTE"
+            function showNotification(message, isError = false) {
+                notification.textContent = message;
+                notification.classList.toggle('bg-red-500', isError);
+                notification.classList.toggle('bg-green-500', !isError);
+                notification.classList.remove('hidden');
+                setTimeout(() => notification.classList.add('hidden'), 4000);
+            }
+
+            window.openRejectionModal = (collectionName, id) => {
+                rejectionInfo = { collectionName, id };
+                rejectionModal.classList.remove('hidden');
             };
 
-            analyzeLogButton.addEventListener('click', async () => {
-                const logText = logInput.value.trim();
-                if (!logText) return showNotification("Lütfen log verisini girin.", true);
-
-                optimizationResultsEl.innerHTML = `<div class="flex justify-center items-center p-8"><div class="loader"></div></div>`;
-                
+            window.approveDeposit = async (id) => {
+                const totalSilver = parseInt(document.getElementById(`amount-${id}`).value);
+                if (!totalSilver || totalSilver <= 0) return showNotification("Geçerli bir tutar girin.", true);
                 try {
-                    // 1. Log'u işle
-                    const lines = logText.split('\n').slice(1); // Başlık satırını atla
+                    await runTransaction(db, async (transaction) => {
+                        const depositRef = doc(db, `artifacts/${appId}/public/data/deposits`, id);
+                        const depositDoc = await transaction.get(depositRef);
+                        if (!depositDoc.exists()) throw new Error("Talep bulunamadı.");
+                        
+                        const data = depositDoc.data();
+                        const repairCost = data.repairCost || 0;
+                        const netAmount = (totalSilver - repairCost) * (1 - guildSettings.taxRate);
+                        const amountPerMember = Math.floor(netAmount / data.partyMembers.length);
+
+                        if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz.");
+
+                        const partyMembersLower = data.partyMembers.map(name => name.toLowerCase());
+                        const usersQuery = query(collection(db, `artifacts/${appId}/public/data/users`), where("inGameName_lowercase", "in", partyMembersLower));
+                        const userDocsSnapshot = await getDocs(usersQuery);
+                        if (userDocsSnapshot.docs.length !== data.partyMembers.length) throw new Error("Parti üyelerinden bazıları sistemde kayıtlı değil.");
+
+                        userDocsSnapshot.docs.forEach(userDoc => {
+                            transaction.update(userDoc.ref, { balance: (userDoc.data().balance || 0) + amountPerMember });
+                        });
+                        
+                        transaction.update(depositRef, { status: 'completed', processedAmount: totalSilver, processedAt: serverTimestamp() });
+                    });
+                    showNotification("Loot satışı onaylandı.");
+                } catch (e) {
+                    console.error("Deposit approval error:", e);
+                    showNotification(`Hata: ${e.message}`, true);
+                }
+            };
+
+            window.approveWithdrawal = async (id) => {
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const withdrawRef = doc(db, `artifacts/${appId}/public/data/withdrawals`, id);
+                        const withdrawDoc = await transaction.get(withdrawRef);
+                        if (!withdrawDoc.exists()) throw new Error("Talep bulunamadı.");
+
+                        const data = withdrawDoc.data();
+                        const userRef = doc(db, `artifacts/${appId}/public/data/users`, data.requesterId);
+                        const userDoc = await transaction.get(userRef);
+                        if (!userDoc.exists() || userDoc.data().balance < data.amount) throw new Error("Kullanıcı bulunamadı veya bakiye yetersiz.");
+
+                        transaction.update(userRef, { balance: userDoc.data().balance - data.amount });
+                        transaction.update(withdrawRef, { status: 'completed', processedAt: serverTimestamp() });
+                    });
+                    showNotification("Çekim talebi onaylandı.");
+                } catch (e) {
+                    console.error("Withdrawal approval error:", e);
+                    showNotification(`Hata: ${e.message}`, true);
+                }
+            };
+            
+            function showDashboard() {
+                adminLoginView.classList.add('hidden');
+                adminDashboardView.classList.remove('hidden');
+                loadGuildSettings();
+                listenToRequests();
+                setupTabs();
+                document.querySelector('.tab-button[data-tab="requests"]').click();
+            }
+
+            function setupTabs() {
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        tabs.forEach(item => item.classList.remove('active'));
+                        tab.classList.add('active');
+                        const target = tab.dataset.tab;
+                        contents.forEach(content => {
+                            if (content.id === `${target}-content`) {
+                                content.classList.remove('hidden');
+                                if (target === 'reports') loadReportsData();
+                                if (target === 'history') loadHistoryData();
+                                if (target === 'logs') loadRegistrationLogs();
+                            } else {
+                                content.classList.add('hidden');
+                            }
+                        });
+                    });
+                });
+                document.getElementById('history-search-name').addEventListener('input', () => loadHistoryData());
+                document.getElementById('history-search-date').addEventListener('change', () => loadHistoryData());
+            }
+            
+            function listenToRequests() {
+                const renderRequests = (listEl, querySnapshot, type) => {
+                    if (querySnapshot.empty) { listEl.innerHTML = `<p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p>`; return; }
+                    listEl.innerHTML = querySnapshot.docs.map(doc => {
+                        const data = doc.data(); const id = doc.id;
+                        const date = data.submittedAt?.toDate()?.toLocaleString('tr-TR') || data.requestedAt?.toDate()?.toLocaleString('tr-TR');
+                        if (type === 'deposit') {
+                            const screenshotLink = data.imageUrl ? `<a href="${data.imageUrl}" target="_blank" class="text-indigo-400 hover:underline text-sm mt-2 inline-block">Ekran Görüntüsünü Görüntüle</a>` : '';
+                            const repairCostText = data.repairCost ? `<p class="text-sm">Tamir Masrafı: <span class="font-semibold">${formatSilver(data.repairCost)}</span></p>` : '';
+                            const estimatedValueText = data.estimatedValue ? `<p class="text-sm">Tahmini Değer: <span class="font-semibold">${formatSilver(data.estimatedValue)}</span></p>` : '';
+                            return `<div class="card rounded-lg p-4"><p class="text-xs text-gray-400">${date}</p><p>Yapan: <span class="font-semibold text-indigo-400">${data.submitterName}</span></p><p class="text-sm">Parti: ${data.partyMembers.join(', ')}</p>${estimatedValueText}${repairCostText}${screenshotLink}<div class="my-4"><label class="block text-sm">Gerçekleşen Toplam Satış Tutarı</label><input type="number" id="amount-${id}" class="form-input w-full p-2 rounded-md mt-1" placeholder="Örn: 12500000"></div><div class="flex gap-2"><button onclick="window.approveDeposit('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla</button><button onclick="window.openRejectionModal('deposits', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button></div></div>`;
+                        } else {
+                            return `<div class="card rounded-lg p-4"><p class="text-xs text-gray-400">${date}</p><p>Yapan: <span class="font-semibold text-indigo-400">${data.requesterName}</span></p><p class="text-lg font-bold my-2">${formatSilver(data.amount)} Silver</p><div class="flex gap-2"><button onclick="window.approveWithdrawal('${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-green-600 hover:bg-green-700">Onayla (Ödendi)</button><button onclick="window.openRejectionModal('withdrawals', '${id}')" class="flex-1 text-white font-bold py-2 px-4 rounded bg-red-600 hover:bg-red-700">Reddet</button></div></div>`;
+                        }
+                    }).join('');
+                };
+                const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "pending"));
+                onSnapshot(depositsQuery, (snapshot) => renderRequests(document.getElementById('deposit-requests-list'), snapshot, 'deposit'));
+                const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "pending"));
+                onSnapshot(withdrawalsQuery, (snapshot) => renderRequests(document.getElementById('withdraw-requests-list'), snapshot, 'withdraw'));
+            }
+
+            async function loadHistoryData() {
+                const nameFilter = document.getElementById('history-search-name').value.toLowerCase();
+                const dateFilter = document.getElementById('history-search-date').value;
+                const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
+                const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
+                const depositsQuery = query(depositsRef, where("status", "!=", "pending"));
+                const withdrawalsQuery = query(withdrawalsRef, where("status", "!=", "pending"));
+                const [depositsSnap, withdrawalsSnap] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
+                let allHistory = [...depositsSnap.docs.map(doc => ({ ...doc.data(), type: 'Loot Yatırma' })), ...withdrawalsSnap.docs.map(doc => ({ ...doc.data(), type: 'Silver Çekim' }))].sort((a, b) => { const dateA = a.processedAt || a.submittedAt || a.requestedAt; const dateB = b.processedAt || b.submittedAt || b.requestedAt; if (!dateA || !dateB) return 0; return dateB.toDate() - dateA.toDate(); });
+                if (nameFilter) allHistory = allHistory.filter(item => (item.submitterName || item.requesterName).toLowerCase().includes(nameFilter));
+                if (dateFilter) allHistory = allHistory.filter(item => { const itemDate = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toISOString().split('T')[0]; return itemDate === dateFilter; });
+                const historyListEl = document.getElementById('history-list');
+                if (allHistory.length === 0) { historyListEl.innerHTML = '<p class="p-8 text-center text-gray-400">Filtreye uygun kayıt bulunamadı.</p>'; return; }
+                historyListEl.innerHTML = allHistory.map(item => { const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok'; const isDeposit = item.type === 'Loot Yatırma'; const name = isDeposit ? item.submitterName : item.requesterName; const statusClass = item.status === 'completed' ? 'text-green-400' : 'text-red-400'; const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs text-gray-400 mt-1">Neden: ${item.rejectionReason}</p>` : ''; let detailsHtml = ''; if (isDeposit) { const processedAmountText = `Gerçekleşen Satış: <span class="font-semibold text-green-400">${formatSilver(item.processedAmount || 0)}</span>`; const repairCostText = `Tamir: <span class="font-semibold text-red-400">${formatSilver(item.repairCost || 0)}</span>`; const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-indigo-400 hover:underline">Görsel</a>` : ''; detailsHtml = `<div class="text-xs text-gray-400 mt-1 flex flex-wrap gap-x-4 gap-y-1">${processedAmountText} | ${repairCostText} | ${screenshotLink}</div>`; } else { const amount = item.amount || 0; detailsHtml = `<p class="text-sm ${statusClass}">${formatSilver(amount)} Silver</p>`; } return `<div class="card p-3 rounded-md"><div class="flex justify-between items-start"><div><p class="font-semibold">${name} - <span class="font-normal">${item.type}</span></p>${detailsHtml}${reasonHtml}</div><p class="text-xs text-gray-400 text-right flex-shrink-0 ml-4">${date}</p></div></div>`; }).join('');
+            }
+
+            async function loadReportsData() {
+                const depositsQuery = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "completed"));
+                const withdrawalsQuery = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("status", "==", "completed"));
+                const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([getDocs(depositsQuery), getDocs(withdrawalsQuery)]);
+                const now = new Date();
+                const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+                const weekAgo = new Date(new Date().setDate(now.getDate() - 7));
+                const monthAgo = new Date(new Date().setDate(now.getDate() - 30));
+                let totalDepositedValue = 0, totalRepairCost = 0, totalGuildProfit = 0;
+                let dailyProfit = 0, weeklyProfit = 0, monthlyProfit = 0;
+                const depositors = {}, withdrawers = {};
+                depositsSnapshot.docs.forEach(doc => { const data = doc.data(); if (!data.processedAt) return; const amount = data.processedAmount || 0; const repairCost = data.repairCost || 0; const netLootValue = amount - repairCost; const processedDate = data.processedAt.toDate(); const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0; totalDepositedValue += amount; totalRepairCost += repairCost; totalGuildProfit += guildProfit; if (processedDate >= todayStart) dailyProfit += guildProfit; if (processedDate >= weekAgo) weeklyProfit += guildProfit; if (processedDate >= monthAgo) monthlyProfit += guildProfit; const amountToPlayers = netLootValue > 0 ? netLootValue * (1 - guildSettings.taxRate) : 0; const amountPerMember = amountToPlayers / data.partyMembers.length; data.partyMembers.forEach(name => { depositors[name] = (depositors[name] || 0) + amountPerMember; }); });
+                withdrawalsSnapshot.docs.forEach(doc => { const data = doc.data(); const name = data.requesterName; withdrawers[name] = (withdrawers[name] || 0) + data.amount; });
+                document.getElementById('total-deposited-value').textContent = formatSilver(totalDepositedValue);
+                document.getElementById('total-repair-cost').textContent = formatSilver(totalRepairCost);
+                document.getElementById('total-guild-profit').textContent = formatSilver(totalGuildProfit);
+                document.getElementById('daily-profit').textContent = formatSilver(dailyProfit);
+                document.getElementById('weekly-profit').textContent = formatSilver(weeklyProfit);
+                document.getElementById('monthly-profit').textContent = formatSilver(monthlyProfit);
+                const renderTopList = (el, data, topN = 5) => { const sorted = Object.entries(data).sort(([, a], [, b]) => b - a).slice(0, topN); if (sorted.length === 0) { el.innerHTML = '<p class="text-center text-gray-400">Veri yok.</p>'; return; } el.innerHTML = sorted.map(([name, amount]) => `<div class="flex justify-between text-sm"><p>${name}</p><p class="font-semibold text-gray-300">${formatSilver(amount)}</p></div>`).join(''); };
+                renderTopList(document.getElementById('top-depositors'), depositors);
+                renderTopList(document.getElementById('top-withdrawers'), withdrawers);
+            }
+
+            async function loadRegistrationLogs() {
+                const logsListEl = document.getElementById('registration-logs-list');
+                logsListEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>`;
+                const logsQuery = query(collection(db, `artifacts/${appId}/public/data/registration_logs`), orderBy("timestamp", "desc"));
+                onSnapshot(logsQuery, (snapshot) => {
+                    if (snapshot.empty) { logsListEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Henüz bir kayıt logu yok.</td></tr>`; return; }
+                    logsListEl.innerHTML = snapshot.docs.map(doc => { const data = doc.data(); const date = data.timestamp?.toDate()?.toLocaleString('tr-TR') || 'Bilinmiyor'; return `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50"><td class="px-6 py-4 font-medium text-white">${data.discordUsername} <span class="text-gray-400 text-xs">(${data.discordId})</span></td><td class="px-6 py-4">${data.inGameName}</td><td class="px-6 py-4">${date}</td></tr>`; }).join('');
+                });
+            }
+
+            async function loadGuildSettings() {
+                const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
+                const docSnap = await getDoc(settingsRef);
+                if (docSnap.exists() && docSnap.data().taxRate !== undefined) { guildSettings = docSnap.data(); }
+                const purchaseRate = Math.round((1 - guildSettings.taxRate) * 100);
+                document.getElementById('purchase-rate-input').value = purchaseRate;
+            }
+
+            document.getElementById('admin-discord-login-button').addEventListener('click', () => {
+                const redirectUri = window.location.origin + window.location.pathname;
+                const scope = 'identify';
+                const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
+                window.location.href = authUrl;
+            });
+
+            async function handleAdminDiscordRedirect() {
+                const fragment = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = fragment.get('access_token');
+                if (!accessToken) return;
+                window.history.replaceState({}, document.title, window.location.pathname);
+                try {
+                    const response = await fetch('https://discordapp.com/api/users/@me', { headers: { 'Authorization': `Bearer ${accessToken}` } });
+                    if (!response.ok) throw new Error('Discord bilgileri alınamadı.');
+                    const discordUser = await response.json();
+                    const adminRef = doc(db, "admins", discordUser.id);
+                    const adminSnap = await getDoc(adminRef);
+                    if (adminSnap.exists()) {
+                        sessionStorage.setItem('isAdminAuthenticated', 'true');
+                        showDashboard();
+                    } else {
+                        showNotification("Yönetici yetkiniz bulunmuyor.", true);
+                    }
+                } catch (error) {
+                    console.error("Admin Discord auth error:", error);
+                    showNotification("Giriş sırasında bir hata oluştu.", true);
+                }
+            }
+
+            document.getElementById('admin-logout-button').addEventListener('click', () => { sessionStorage.removeItem('isAdminAuthenticated'); window.location.reload(); });
+            document.getElementById('cancel-rejection').addEventListener('click', () => { rejectionModal.classList.add('hidden'); });
+            document.getElementById('confirm-rejection').addEventListener('click', async () => { const reason = document.getElementById('rejection-reason').value.trim(); if (!reason) return showNotification("Lütfen bir red sebebi girin.", true); const { collectionName, id } = rejectionInfo; const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id); await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason, processedAt: serverTimestamp() }).commit(); showNotification("Talep reddedildi."); rejectionModal.classList.add('hidden'); document.getElementById('rejection-reason').value = ''; });
+            document.getElementById('save-settings-button').addEventListener('click', async () => { const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value); if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true); const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15)); const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); await setDoc(settingsRef, { taxRate: taxRate }, { merge: true }); await loadGuildSettings(); showNotification("Ayarlar başarıyla kaydedildi."); });
+            document.getElementById('update-guild-members-button').addEventListener('click', async () => { const button = document.getElementById('update-guild-members-button'); button.disabled = true; button.textContent = "Güncelleniyor..."; try { const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`; const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`; const response = await fetch(proxyUrl); if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`); const members = await response.json(); if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası."); const usersRef = collection(db, `artifacts/${appId}/public/data/users`); const batch = writeBatch(db); let newMemberCount = 0; for (const member of members) { const memberNameLower = member.Name.toLowerCase(); const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower)); const snapshot = await getDocs(q); if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; } } await batch.commit(); showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`); } catch (error) { showNotification(`Hata: ${error.message}`, true); } finally { button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et"; } });
+            
+            document.getElementById('analyze-log-button').addEventListener('click', async () => {
+                const logText = document.getElementById('log-input').value.trim();
+                if (!logText) return showNotification("Lütfen log verisini girin.", true);
+                const optimizationResultsEl = document.getElementById('optimization-results');
+                optimizationResultsEl.innerHTML = `<div class="flex justify-center items-center p-8"><div class="loader"></div></div>`;
+                try {
+                    const lines = logText.split('\n').slice(1);
                     const itemsToPrice = {};
                     lines.forEach(line => {
-                        const parts = line.replace(/"/g, '').split('\t');
-                        if (parts.length < 6) return;
-                        
+                        const parts = line.replace(/"/g, '').split('\t'); if (parts.length < 6) return;
                         const itemName = parts[2].toLowerCase();
                         const enchantment = parseInt(parts[3] || '0');
                         const quality = parseInt(parts[4] || '1');
                         const amount = parseInt(parts[5] || '1');
-                        
                         const uniqueKey = `${itemName}@${enchantment}q${quality}`;
-                        if (itemsToPrice[uniqueKey]) {
-                            itemsToPrice[uniqueKey].amount += amount;
-                        } else {
-                            itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount };
-                        }
+                        if (itemsToPrice[uniqueKey]) { itemsToPrice[uniqueKey].amount += amount; } 
+                        else { itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount }; }
                     });
 
-                    // 2. Albion Data Project'ten fiyatları çek
-                    const itemIds = Object.values(itemsToPrice)
-                        .map(item => ITEM_ID_MAP[item.itemName])
-                        .filter(Boolean) // Eşleşmeyenleri kaldır
-                        .join(',');
-
+                    const ITEM_ID_MAP = { "adept's bag": "T4_BAG", "adept's lymhurst cape": "T4_CAPE_LYMHURST", "grandmaster's cleric robe": "T7_ARMOR_CLOTH_HEAL", "elder's stalker shoes": "T8_SHOES_LEATHER_STALKER", "grandmaster's damnation staff": "T7_2H_CURSEDSTAFF_MORGANA", "adept's smuggler cape": "T4_CAPE_THETFORD", "adept's mistcaller": "T4_OFF_MISTCALLER", "adept's mage cowl": "T4_HEAD_CLOTH_MAGE", "elder's fort sterling cape": "T8_CAPE_FORTSTERLING", "holy fetish": "T4_ARTEFACT_2H_HOLYSTAFF_HELL", "pork omelette": "T3_MEAL_OMELETTE"};
+                    const itemIds = Object.values(itemsToPrice).map(item => ITEM_ID_MAP[item.itemName]).filter(Boolean).join(',');
                     if (!itemIds) throw new Error("Log'da bilinen bir item bulunamadı.");
 
                     const locations = "Black Market,Bridgewatch,Caerleon,Fort Sterling,Lymhurst,Martlock,Thetford";
-                    const qualities = "1,2,3,4,5";
-                    const priceApiUrl = `https://www.albion-online-data.com/api/v2/stats/prices/${itemIds}?locations=${locations}&qualities=${qualities}`;
-                    
+                    const priceApiUrl = `https://europe.albion-online-data.com/api/v2/stats/prices/${itemIds}?locations=${locations}&qualities=1,2,3,4,5`;
                     const priceResponse = await fetch(priceApiUrl);
                     if (!priceResponse.ok) throw new Error("Fiyat verileri alınamadı.");
                     const priceData = await priceResponse.json();
 
-                    // 3. En karlı şehri bul ve itemleri grupla
                     const cityGroups = {};
                     Object.values(itemsToPrice).forEach(item => {
-                        const itemId = ITEM_ID_MAP[item.itemName];
-                        if (!itemId) return;
-
-                        let bestCity = null;
-                        let maxPrice = 0;
-
+                        const itemId = ITEM_ID_MAP[item.itemName]; if (!itemId) return;
+                        let bestCity = null; let maxPrice = 0;
                         priceData.forEach(priceEntry => {
                             if (priceEntry.item_id === itemId && priceEntry.quality === item.quality && priceEntry.sell_price_min > maxPrice) {
-                                maxPrice = priceEntry.sell_price_min;
-                                bestCity = priceEntry.city;
+                                maxPrice = priceEntry.sell_price_min; bestCity = priceEntry.city;
                             }
                         });
-
                         if (bestCity && maxPrice > 0) {
-                            if (!cityGroups[bestCity]) {
-                                cityGroups[bestCity] = { items: [], totalValue: 0 };
-                            }
+                            if (!cityGroups[bestCity]) cityGroups[bestCity] = { items: [], totalValue: 0 };
                             const itemValue = maxPrice * item.amount;
                             cityGroups[bestCity].items.push({ ...item, price: maxPrice, value: itemValue });
                             cityGroups[bestCity].totalValue += itemValue;
                         }
                     });
-
-                    // 4. Sonuçları ekrana yazdır
-                    renderOptimizationResults(cityGroups);
-
+                    
+                    if (Object.keys(cityGroups).length === 0) { optimizationResultsEl.innerHTML = `<p class="text-center text-zinc-400 p-8">Karlı bir satış lokasyonu bulunamadı.</p>`; return; }
+                    let html = '';
+                    for (const city in cityGroups) {
+                        const group = cityGroups[city];
+                        html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">${city} - Toplam Değer: <span class="text-amber-400">${formatSilver(group.totalValue)}</span></h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
+                        group.items.forEach(item => {
+                            const itemId = ITEM_ID_MAP[item.itemName];
+                            const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
+                            const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
+                            html += `<div class="card flex items-center p-3 gap-3"><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.itemName}">${item.itemName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p><p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p></div></div>`;
+                        });
+                        html += `</div></div>`;
+                    }
+                    optimizationResultsEl.innerHTML = html;
                 } catch (error) {
                     console.error("Optimization Error:", error);
                     showNotification(error.message, true);
@@ -197,41 +510,20 @@
                 }
             });
 
-            function renderOptimizationResults(cityGroups) {
-                if (Object.keys(cityGroups).length === 0) {
-                    optimizationResultsEl.innerHTML = `<p class="text-center text-zinc-400 p-8">Karlı bir satış lokasyonu bulunamadı.</p>`;
-                    return;
-                }
-
-                let html = '';
-                for (const city in cityGroups) {
-                    const group = cityGroups[city];
-                    html += `
-                        <div class="city-result mt-6">
-                            <h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">${city} - Toplam Değer: <span class="text-amber-400">${formatSilver(group.totalValue)}</span></h3>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    `;
-                    group.items.forEach(item => {
-                        const itemId = ITEM_ID_MAP[item.itemName];
-                        const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
-                        const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
-                        html += `
-                            <div class="card flex items-center p-3 gap-3">
-                                <img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0">
-                                <div class="overflow-hidden">
-                                    <p class="font-semibold text-sm truncate" title="${item.itemName}">${item.itemName}</p>
-                                    <p class="text-xs text-zinc-400">Adet: ${item.amount}</p>
-                                    <p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    html += `</div></div>`;
-                }
-                optimizationResultsEl.innerHTML = html;
+            async function initializeAppAndAuth() {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                try { 
+                    await signInAnonymously(auth); 
+                    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+                        showDashboard();
+                    } else {
+                        await handleAdminDiscordRedirect();
+                    }
+                } catch (error) { console.error("Admin auth error", error); }
             }
-
-            // ... (diğer tüm eski kodlar buraya gelecek)
+            initializeAppAndAuth();
         });
     </script>
 </body>
