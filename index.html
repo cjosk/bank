@@ -10,6 +10,8 @@
         body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
         .form-input, .form-textarea { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
         .card { background-color: #2d3748; border: 1px solid #4a5568; }
+        .btn-discord { background-color: #5865F2; }
+        .btn-discord:hover { background-color: #4752C4; }
         .btn-primary { background-color: #4f46e5; }
         .btn-primary:hover { background-color: #4338ca; }
         .file-drop-area { border: 2px dashed #4a5568; }
@@ -24,16 +26,28 @@
         <div id="login-view" class="flex items-center justify-center min-h-screen p-4">
             <div class="w-full max-w-sm card p-8 rounded-lg shadow-lg text-center">
                 <h1 class="text-2xl font-bold text-white mb-2">Klan Kasasına Hoş Geldin</h1>
-                <p class="text-gray-400 mb-6">Lütfen oyundaki ismini girerek devam et.</p>
-                <form id="login-form">
-                    <input id="in-game-name" type="text" placeholder="Oyun-içi İsim" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
-                    <button type="submit" class="w-full py-3 rounded-md font-bold text-white btn-primary">Giriş Yap</button>
-                </form>
+                <p class="text-gray-400 mb-6">Devam etmek için Discord hesabınla giriş yap.</p>
+                <button id="discord-login-button" class="w-full py-3 rounded-md font-bold text-white btn-discord flex items-center justify-center gap-2">
+                    <svg class="w-6 h-6" aria-hidden="true" role="img" width="24" height="24" preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24"><path fill="currentColor" d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.443.805-.632 1.29a18.168 18.168 0 0 0-5.485 0a17.3 17.3 0 0 0-.632-1.29a.074.074 0 0 0-.08-.037a19.791 19.791 0 0 0-4.885 1.515a.069.069 0 0 0-.032.059a19.342 19.342 0 0 0-1.622 5.585a.078.078 0 0 0 .028.083a17.9 17.9 0 0 0 4.1 2.624a.074.074 0 0 0 .089-.022a1.171 1.171 0 0 1 .494-.325a.074.074 0 0 0 .018-.111a12.112 12.112 0 0 0-1.88-1.084a.074.074 0 0 1-.038-.062a15.777 15.777 0 0 1 .413-2.91a.075.075 0 0 0 .043-.075a1.189 1.189 0 0 1 .018-.043a1.17 1.17 0 0 1 .1-.141a.071.071 0 0 0 .034-.044Z M12 16.117c-1.933 0-3.5-1.72-3.5-3.857c0-2.137 1.567-3.857 3.5-3.857s3.5 1.72 3.5 3.857c0 2.137-1.567 3.857-3.5 3.857Zm-4.136-3.857c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Zm8.272 0c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Z"/></svg>
+                    <span>Discord ile Giriş Yap</span>
+                </button>
             </div>
         </div>
 
+        <div id="link-account-view" class="hidden flex items-center justify-center min-h-screen p-4">
+            <div class="w-full max-w-sm card p-8 rounded-lg shadow-lg text-center">
+                <img id="discord-avatar" class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-indigo-400">
+                <h1 id="discord-username" class="text-xl font-bold text-white mb-2"></h1>
+                <p class="text-gray-400 mb-6">Hesabını bağlamak için oyundaki ismini gir.</p>
+                <form id="link-account-form">
+                    <input id="in-game-name-link" type="text" placeholder="Oyun-içi İsim" class="form-input w-full p-3 rounded-md mb-4 text-center" required>
+                    <button type="submit" class="w-full py-3 rounded-md font-bold text-white btn-primary">Hesabı Bağla</button>
+                </form>
+            </div>
+        </div>
+        
         <div id="dashboard-view" class="hidden w-full max-w-5xl mx-auto p-4 sm:p-6 md:p-8">
-            <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 pb-4 border-b border-gray-700">
+             <header class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 pb-4 border-b border-gray-700">
                 <div>
                     <p class="text-sm text-gray-400">Hoş Geldin,</p>
                     <h1 id="player-name" class="text-3xl font-bold text-white"></h1>
@@ -144,8 +158,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // --- DISCORD AYARLARI ---
+        const DISCORD_CLIENT_ID = "1412951643741356215"; // Discord Developer Portal'dan alınacak.
 
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
@@ -161,9 +178,11 @@
 
         let app, auth, db, storage;
         let currentUser = null;
-        let guildSettings = { taxRate: 0.20 }; 
+        let guildSettings = { taxRate: 0.20 };
+        let tempDiscordUser = null; 
 
         const loginView = document.getElementById('login-view');
+        const linkAccountView = document.getElementById('link-account-view');
         const dashboardView = document.getElementById('dashboard-view');
         const notification = document.getElementById('notification');
         const actionContent = document.getElementById('action-content');
@@ -192,24 +211,102 @@
             setTimeout(() => notification.classList.add('hidden'), 3000);
         }
 
-        async function loginOrCreateUser(name) {
-            const nameLower = name.toLowerCase();
-            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
-            const q = query(usersRef, where("inGameName_lowercase", "==", nameLower));
-            const snapshot = await getDocs(q);
+        // --- YENİ DISCORD GİRİŞ AKIŞI ---
+        document.getElementById('discord-login-button').addEventListener('click', () => {
+            const redirectUri = window.location.origin + window.location.pathname;
+            const scope = 'identify';
+            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
+            window.location.href = authUrl;
+        });
+        
+        async function handleDiscordRedirect() {
+            const fragment = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = fragment.get('access_token');
 
-            if (snapshot.empty) {
-                return showNotification("Bu isim sistemde kayıtlı değil. Lütfen admin ile görüşün.", true);
+            if (!accessToken) return; // Normal sayfa yüklenmesi, işlem yapma
+
+            // URL'i temizle
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            try {
+                const response = await fetch('https://discordapp.com/api/users/@me', {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
+                if (!response.ok) throw new Error('Discord bilgileri alınamadı.');
+                
+                const discordUser = await response.json();
+                tempDiscordUser = discordUser; // Geçici olarak sakla
+
+                // Bu Discord ID'si ile kayıtlı bir kullanıcı var mı?
+                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                const q = query(usersRef, where("discordId", "==", discordUser.id));
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    // İlk defa giriş yapıyor, nick bağlama ekranını göster
+                    loginView.classList.add('hidden');
+                    linkAccountView.classList.remove('hidden');
+                    document.getElementById('discord-avatar').src = `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png`;
+                    document.getElementById('discord-username').textContent = discordUser.username;
+                } else {
+                    // Zaten kayıtlı, doğrudan giriş yap
+                    currentUser = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+                    localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+                    showDashboard();
+                }
+
+            } catch (error) {
+                console.error("Discord auth error:", error);
+                showNotification("Discord ile giriş yapılırken bir hata oluştu.", true);
             }
-            
-            const userDoc = snapshot.docs[0];
-            currentUser = { id: userDoc.id, ...userDoc.data() };
-            localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
-            showDashboard();
         }
+
+        document.getElementById('link-account-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inGameName = document.getElementById('in-game-name-link').value.trim();
+            if (!inGameName || !tempDiscordUser) return;
+
+            const nameLower = inGameName.toLowerCase();
+            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            const batch = writeBatch(db);
+
+            const qNick = query(usersRef, where("inGameName_lowercase", "==", nameLower));
+            const nickSnapshot = await getDocs(qNick);
+
+            if (nickSnapshot.empty) {
+                return showNotification("Bu isim guild listesinde bulunamadı. Lütfen admin ile görüşün.", true);
+            }
+
+            const userDoc = nickSnapshot.docs[0];
+            if (userDoc.data().discordId) {
+                return showNotification("Bu oyun içi isim zaten başka bir Discord hesabına bağlı.", true);
+            }
+
+            batch.update(userDoc.ref, { 
+                discordId: tempDiscordUser.id,
+                discordUsername: tempDiscordUser.username 
+            });
+
+            const logRef = doc(collection(db, `artifacts/${appId}/public/data/registration_logs`));
+            batch.set(logRef, {
+                discordId: tempDiscordUser.id,
+                discordUsername: tempDiscordUser.username,
+                inGameName: userDoc.data().inGameName,
+                timestamp: serverTimestamp()
+            });
+
+            await batch.commit();
+
+            showNotification("Hesap başarıyla bağlandı!");
+            currentUser = { id: userDoc.id, ...userDoc.data(), discordId: tempDiscordUser.id, discordUsername: tempDiscordUser.username };
+            localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+            linkAccountView.classList.add('hidden');
+            showDashboard();
+        });
 
         async function showDashboard() {
             loginView.classList.add('hidden');
+            linkAccountView.classList.add('hidden');
             dashboardView.classList.remove('hidden');
             document.getElementById('player-name').textContent = currentUser.inGameName;
             
@@ -226,12 +323,6 @@
             listenToUserHistory();
         }
         
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('in-game-name').value.trim();
-            if (name) loginOrCreateUser(name);
-        });
-
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const button = e.target.querySelector('button[type="submit"]');
@@ -416,14 +507,17 @@
             db = getFirestore(app);
             storage = getStorage(app);
             try {
-                await signInAnonymously(auth);
+                await signInAnonymously(auth); // Arka plan işlemleri için anonim oturum
                 const savedUser = localStorage.getItem('loggedInUser');
-                if(savedUser){
+                if (savedUser) {
                     currentUser = JSON.parse(savedUser);
                     showDashboard();
+                } else {
+                    await handleDiscordRedirect();
                 }
             } catch (error) { console.error("Auth error", error); }
         }
+
         initializeAppAndAuth();
     </script>
 </body>
