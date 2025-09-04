@@ -81,7 +81,7 @@
             </div>
             
             <div id="history-content" class="tab-content hidden">
-                 <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
+                <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
                  <div class="flex flex-col sm:flex-row gap-4 mb-4">
                     <input type="text" id="history-search-name" class="form-input flex-grow p-2 rounded-md" placeholder="Oyuncu adına göre ara...">
                     <input type="date" id="history-search-date" class="form-input p-2 rounded-md">
@@ -175,7 +175,7 @@
     
     <div id="price-details-modal" class="fixed inset-0 hidden modal-backdrop z-50">
         <div class="card w-full max-w-md p-6 rounded-lg shadow-lg relative">
-             <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
+             <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
              <div class="flex items-center gap-4 mb-4">
                 <img id="modal-item-image" src="" class="w-16 h-16 bg-black/20 rounded-md">
                 <div>
@@ -209,6 +209,8 @@
         const DISCORD_CLIENT_ID = "1412951643741356215";
         const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA";
         let guildSettings = { taxRate: 0.20 };
+        const ITEM_LIST_URL = 'https://bank-eight-omega.vercel.app/items.txt';
+        let ITEM_ID_MAP = {};
         
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
@@ -420,13 +422,6 @@
                 document.getElementById('purchase-rate-input').value = purchaseRate;
             }
 
-            document.getElementById('admin-discord-login-button').addEventListener('click', () => {
-                const redirectUri = window.location.origin + window.location.pathname;
-                const scope = 'identify';
-                const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
-                window.location.href = authUrl;
-            });
-
             async function handleAdminDiscordRedirect() {
                 const fragment = new URLSearchParams(window.location.hash.substring(1));
                 const accessToken = fragment.get('access_token');
@@ -449,13 +444,44 @@
                     showNotification("Giriş sırasında bir hata oluştu.", true);
                 }
             }
-
+            
+            async function loadItemMap() {
+                try {
+                    const response = await fetch(ITEM_LIST_URL);
+                    if (!response.ok) throw new Error("Item listesi indirilemedi.");
+                    const text = await response.text();
+                    const lines = text.split('\n');
+                    lines.forEach(line => {
+                        const parts = line.split(':');
+                        if (parts.length >= 2) {
+                            const uniqueNameMatch = parts[1].match(/[A-Z0-9_]+/);
+                            if (uniqueNameMatch) {
+                                const uniqueName = uniqueNameMatch[0];
+                                const localizedName = parts.slice(2).join(':').trim().toLowerCase();
+                                if(uniqueName && localizedName) {
+                                    ITEM_ID_MAP[localizedName] = uniqueName;
+                                }
+                            }
+                        }
+                    });
+                    console.log(`Başarıyla ${Object.keys(ITEM_ID_MAP).length} item yüklendi.`);
+                } catch (error) {
+                    console.error("Item listesi yüklenirken hata:", error);
+                    showNotification("Item veritabanı yüklenemedi, optimizasyon aracı çalışmayabilir.", true);
+                }
+            }
+            
+            document.getElementById('admin-discord-login-button').addEventListener('click', () => {
+                const redirectUri = window.location.origin + window.location.pathname;
+                const scope = 'identify';
+                const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
+                window.location.href = authUrl;
+            });
             document.getElementById('admin-logout-button').addEventListener('click', () => { sessionStorage.removeItem('isAdminAuthenticated'); window.location.reload(); });
             document.getElementById('cancel-rejection').addEventListener('click', () => { rejectionModal.classList.add('hidden'); });
             document.getElementById('confirm-rejection').addEventListener('click', async () => { const reason = document.getElementById('rejection-reason').value.trim(); if (!reason) return showNotification("Lütfen bir red sebebi girin.", true); const { collectionName, id } = rejectionInfo; const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id); await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason, processedAt: serverTimestamp() }).commit(); showNotification("Talep reddedildi."); rejectionModal.classList.add('hidden'); document.getElementById('rejection-reason').value = ''; });
             document.getElementById('save-settings-button').addEventListener('click', async () => { const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value); if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true); const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15)); const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); await setDoc(settingsRef, { taxRate: taxRate }, { merge: true }); await loadGuildSettings(); showNotification("Ayarlar başarıyla kaydedildi."); });
             document.getElementById('update-guild-members-button').addEventListener('click', async () => { const button = document.getElementById('update-guild-members-button'); button.disabled = true; button.textContent = "Güncelleniyor..."; try { const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`; const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`; const response = await fetch(proxyUrl); if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`); const members = await response.json(); if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası."); const usersRef = collection(db, `artifacts/${appId}/public/data/users`); const batch = writeBatch(db); let newMemberCount = 0; for (const member of members) { const memberNameLower = member.Name.toLowerCase(); const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower)); const snapshot = await getDocs(q); if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; } } await batch.commit(); showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`); } catch (error) { showNotification(`Hata: ${error.message}`, true); } finally { button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et"; } });
-            
             document.getElementById('analyze-log-button').addEventListener('click', async () => {
                 const logText = document.getElementById('log-input').value.trim();
                 if (!logText) return showNotification("Lütfen log verisini girin.", true);
@@ -464,89 +490,27 @@
                 try {
                     const lines = logText.split('\n').slice(1);
                     const itemsToPrice = {};
-                    lines.forEach(line => {
-                        const parts = line.replace(/"/g, '').split('\t'); if (parts.length < 6) return;
-                        const itemName = parts[2].toLowerCase().trim();
-                        const enchantment = parseInt(parts[3] || '0');
-                        const quality = parseInt(parts[4] || '1');
-                        const amount = parseInt(parts[5] || '1');
-                        const uniqueKey = `${itemName}@${enchantment}q${quality}`;
-                        if (itemsToPrice[uniqueKey]) { itemsToPrice[uniqueKey].amount += amount; } 
-                        else { itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount, fullName: parts[2] }; }
-                    });
-
-                    const ITEM_ID_MAP = {"adept's bag": "T4_BAG", "adept's lymhurst cape": "T4_CAPE_LYMHURST", "grandmaster's cleric robe": "T7_ARMOR_CLOTH_HEAL", "elder's stalker shoes": "T8_SHOES_LEATHER_STALKER", "grandmaster's damnation staff": "T7_2H_CURSEDSTAFF_MORGANA", "adept's smuggler cape": "T4_CAPE_THETFORD", "adept's mistcaller": "T4_OFF_MISTCALLER", "adept's mage cowl": "T4_HEAD_CLOTH_MAGE", "elder's fort sterling cape": "T8_CAPE_FORTSTERLING", "holy fetish": "T4_ARTEFACT_2H_HOLYSTAFF_HELL", "pork omelette": "T3_MEAL_OMELETTE"};
-                    const itemIds = [...new Set(Object.values(itemsToPrice).map(item => ITEM_ID_MAP[item.itemName]).filter(Boolean))].join(',');
+                    lines.forEach(line => { const parts = line.replace(/"/g, '').split('\t'); if (parts.length < 6) return; const itemName = parts[2].toLowerCase().trim(); const enchantment = parseInt(parts[3] || '0'); const quality = parseInt(parts[4] || '1'); const amount = parseInt(parts[5] || '1'); const uniqueKey = `${itemName}@${enchantment}q${quality}`; if (itemsToPrice[uniqueKey]) { itemsToPrice[uniqueKey].amount += amount; } else { itemsToPrice[uniqueKey] = { itemName, enchantment, quality, amount, fullName: parts[2] }; } });
+                    const uniqueItemIds = new Set();
+                    Object.values(itemsToPrice).forEach(item => { const itemId = ITEM_ID_MAP[item.itemName]; if (itemId) uniqueItemIds.add(itemId); });
+                    const itemIds = [...uniqueItemIds].join(',');
                     if (!itemIds) throw new Error("Log'da bilinen bir item bulunamadı.");
-
                     const locations = "Black Market,Bridgewatch,Caerleon,Fort Sterling,Lymhurst,Martlock,Thetford";
                     const priceApiUrl = `https://europe.albion-online-data.com/api/v2/stats/prices/${itemIds}?locations=${locations}&qualities=1,2,3,4,5`;
                     const priceResponse = await fetch(priceApiUrl);
                     if (!priceResponse.ok) throw new Error("Fiyat verileri alınamadı.");
                     const priceData = await priceResponse.json();
-
                     const cityGroups = {};
                     const unpricedItems = [];
-                    Object.values(itemsToPrice).forEach(item => {
-                        const itemId = ITEM_ID_MAP[item.itemName]; if (!itemId) return;
-                        let bestCity = null; let maxPrice = 0;
-                        const allPrices = {};
-                        locations.split(',').forEach(city => allPrices[city] = 0);
-                        priceData.forEach(priceEntry => {
-                            if (priceEntry.item_id === itemId && priceEntry.quality === item.quality) {
-                                allPrices[priceEntry.city] = priceEntry.sell_price_min;
-                                if (priceEntry.sell_price_min > maxPrice) {
-                                    maxPrice = priceEntry.sell_price_min; bestCity = priceEntry.city;
-                                }
-                            }
-                        });
-                        const itemData = { ...item, allPrices };
-                        if (bestCity && maxPrice > 0) {
-                            if (!cityGroups[bestCity]) cityGroups[bestCity] = { items: [], totalValue: 0 };
-                            const itemValue = maxPrice * item.amount;
-                            cityGroups[bestCity].items.push({ ...itemData, price: maxPrice, value: itemValue });
-                            cityGroups[bestCity].totalValue += itemValue;
-                        } else {
-                            unpricedItems.push(itemData);
-                        }
-                    });
-                    
+                    Object.values(itemsToPrice).forEach(item => { const itemId = ITEM_ID_MAP[item.itemName]; if (!itemId) return; let bestCity = null; let maxPrice = 0; const allPrices = {}; locations.split(',').forEach(city => allPrices[city] = 0); priceData.forEach(priceEntry => { if (priceEntry.item_id === itemId && priceEntry.quality === item.quality) { allPrices[priceEntry.city] = priceEntry.sell_price_min; if (priceEntry.sell_price_min > maxPrice) { maxPrice = priceEntry.sell_price_min; bestCity = priceEntry.city; } } }); const itemData = { ...item, allPrices }; if (bestCity && maxPrice > 0) { if (!cityGroups[bestCity]) cityGroups[bestCity] = { items: [], totalValue: 0 }; const itemValue = maxPrice * item.amount; cityGroups[bestCity].items.push({ ...itemData, price: maxPrice, value: itemValue }); cityGroups[bestCity].totalValue += itemValue; } else { unpricedItems.push(itemData); } });
                     if (Object.keys(cityGroups).length === 0 && unpricedItems.length === 0) { optimizationResultsEl.innerHTML = `<p class="text-center text-zinc-400 p-8">Analiz edilecek veri bulunamadı.</p>`; return; }
                     let html = '';
-                    for (const city in cityGroups) {
-                        const group = cityGroups[city];
-                        html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">${city} - Toplam Değer: <span class="text-amber-400">${formatSilver(group.totalValue)}</span></h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
-                        group.items.forEach(item => {
-                            const itemId = ITEM_ID_MAP[item.itemName];
-                            const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
-                            const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
-                            const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`;
-                            html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p><p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p></div></div>`;
-                        });
-                        html += `</div></div>`;
-                    }
-                    if(unpricedItems.length > 0) {
-                        html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">Satış Emri Olmayan Ürünler</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`;
-                        unpricedItems.forEach(item => {
-                            const itemId = ITEM_ID_MAP[item.itemName];
-                            const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : '';
-                            const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`;
-                            const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`;
-                            html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition opacity-60" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p></div></div>`;
-                        });
-                        html += `</div></div>`;
-                    }
+                    for (const city in cityGroups) { const group = cityGroups[city]; html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">${city} - Toplam Değer: <span class="text-amber-400">${formatSilver(group.totalValue)}</span></h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`; group.items.forEach(item => { const itemId = ITEM_ID_MAP[item.itemName]; const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : ''; const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`; const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`; html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p><p class="text-xs font-bold text-green-400">${formatSilver(item.price)}</p></div></div>`; }); html += `</div></div>`; }
+                    if(unpricedItems.length > 0) { html += `<div class="city-result mt-6"><h3 class="text-xl font-bold border-b border-gray-700 pb-2 mb-4">Satış Emri Olmayan Ürünler</h3><div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">`; unpricedItems.forEach(item => { const itemId = ITEM_ID_MAP[item.itemName]; const enchantmentPart = item.enchantment > 0 ? `@${item.enchantment}` : ''; const imageUrl = `https://render.albiononline.com/v1/item/${itemId}${enchantmentPart}.png?quality=${item.quality}`; const itemDetails = `.${item.enchantment} | Kalite ${item.quality}`; html += `<div class="card flex items-center p-3 gap-3 cursor-pointer hover:border-amber-400 transition opacity-60" onclick='window.showItemPrices("${item.fullName}", "${itemDetails}", "${imageUrl}", ${JSON.stringify(item.allPrices)})'><img src="${imageUrl}" onerror="this.style.display='none'" class="w-16 h-16 bg-black/20 rounded-md flex-shrink-0"><div class="overflow-hidden"><p class="font-semibold text-sm truncate" title="${item.fullName}">${item.fullName}</p><p class="text-xs text-zinc-400">Adet: ${item.amount}</p></div></div>`; }); html += `</div></div>`; }
                     optimizationResultsEl.innerHTML = html;
-                } catch (error) {
-                    console.error("Optimization Error:", error);
-                    showNotification(error.message, true);
-                    optimizationResultsEl.innerHTML = `<p class="text-center text-red-400 p-8">${error.message}</p>`;
-                }
+                } catch (error) { console.error("Optimization Error:", error); showNotification(error.message, true); optimizationResultsEl.innerHTML = `<p class="text-center text-red-400 p-8">${error.message}</p>`; }
             });
-
-            document.getElementById('close-price-modal').addEventListener('click', () => {
-                document.getElementById('price-details-modal').classList.add('hidden');
-            });
+            document.getElementById('close-price-modal').addEventListener('click', () => { document.getElementById('price-details-modal').classList.add('hidden'); });
             
             async function initializeAppAndAuth() {
                 app = initializeApp(firebaseConfig);
@@ -554,6 +518,7 @@
                 db = getFirestore(app);
                 try { 
                     await signInAnonymously(auth); 
+                    await loadItemMap();
                     if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
                         showDashboard();
                     } else {
