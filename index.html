@@ -34,7 +34,7 @@
         .card { 
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 1.25rem; /* Daha yuvarlak köşeler */
+            border-radius: 1.25rem;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -64,6 +64,11 @@
             transform: scale(1.03);
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
 
         .btn-discord { background-color: var(--discord-blue); }
         .btn-discord:hover { background-color: #4752C4; }
@@ -87,7 +92,7 @@
         .tab-button.active::after {
             content: '';
             position: absolute;
-            bottom: -2px; /* Border ile hizalamak için */
+            bottom: -2px;
             left: 0;
             right: 0;
             height: 2px;
@@ -170,87 +175,73 @@
             </div>
 
             <div id="action-content">
-                <!-- Main Content Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Left and Middle Section (Forms and Calculator) -->
-                    <div class="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="card p-6 lg:p-8">
-                            <h2 class="text-xl font-bold mb-4" style="color: var(--accent-gold);">Örnek Satış Hesaplayıcı</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label for="calc-total-value" class="block text-sm font-medium text-zinc-300">Toplam Satış Tutarı</label>
-                                    <input type="number" id="calc-total-value" class="form-input w-full p-2 mt-1" placeholder="10000000">
-                                </div>
-                                <div>
-                                    <label for="calc-repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı</label>
-                                    <input type="number" id="calc-repair-cost" class="form-input w-full p-2 mt-1" placeholder="150000">
-                                </div>
-                                <div>
-                                    <label for="calc-party-count" class="block text-sm font-medium text-zinc-300">Parti Üye Sayısı</label>
-                                    <input type="number" id="calc-party-count" class="form-input w-full p-2 mt-1" placeholder="5">
-                                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="card p-6 lg:p-8">
+                        <h2 class="text-xl font-bold mb-4" style="color: var(--accent-gold);">Örnek Satış Hesaplayıcı</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="calc-total-value" class="block text-sm font-medium text-zinc-300">Toplam Satış Tutarı</label>
+                                <input type="number" id="calc-total-value" class="form-input w-full p-2 mt-1" placeholder="10000000">
                             </div>
-                            <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
-                                <div class="flex justify-between text-sm mt-2">
-                                    <span class="text-zinc-400">Kesinti Öncesi Net Tutar:</span>
-                                    <span id="calc-pre-tax" class="font-medium text-zinc-200">0</span>
-                                </div>
-                                <div class="flex justify-between text-sm mt-2">
-                                    <span class="text-zinc-400">Guild Alış Oranı (<span id="calc-tax-rate-display">%20</span>):</span>
-                                    <span id="calc-tax-amount" class="font-medium" style="color: var(--accent-red);">- 0</span>
-                                </div>
-                                 <div class="flex justify-between text-lg font-bold mt-4">
-                                    <span class="text-white">Oyuncu Başına Düşen:</span>
-                                    <span id="calc-net-payout" style="color: var(--accent-green);">0 Silver</span>
-                                </div>
+                            <div>
+                                <label for="calc-repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı</label>
+                                <input type="number" id="calc-repair-cost" class="form-input w-full p-2 mt-1" placeholder="150000">
+                            </div>
+                            <div>
+                                <label for="calc-party-count" class="block text-sm font-medium text-zinc-300">Parti Üye Sayısı</label>
+                                <input type="number" id="calc-party-count" class="form-input w-full p-2 mt-1" placeholder="5">
                             </div>
                         </div>
-                        <div class="space-y-8">
-                            <div id="deposit-form-container" class="card p-6 lg:p-8">
-                                <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
-                                <form id="deposit-form" class="space-y-4">
-                                    <div>
-                                        <label for="party-members" class="block text-sm font-medium text-zinc-300">Parti Üyeleri (Virgülle ayır)</label>
-                                        <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2" required></textarea>
-                                    </div>
-                                    <div>
-                                        <label for="estimated-value" class="block text-sm font-medium text-zinc-300">Tahmini Toplam Tab/Sandık Tutarı</label>
-                                        <input type="number" id="estimated-value" placeholder="Örn: 15000000" class="form-input w-full p-2" required>
-                                    </div>
-                                    <div>
-                                        <label for="repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı (Repair Cost)</label>
-                                        <input type="number" id="repair-cost" placeholder="Örn: 150000" class="form-input w-full p-2" required>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-zinc-300">Ekran Görüntüsü</label>
-                                        <div id="file-drop-area" class="file-drop-area mt-1 p-6 text-center cursor-pointer transition-colors">
-                                            <p id="file-info" class="text-zinc-400">Görseli buraya sürükle veya seçmek için tıkla</p>
-                                            <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
-                                        </div>
-                                    </div>
-                                    <button type="submit" class="btn btn-secondary w-full py-2.5">Loot Yatırma Talebi Gönder</button>
-                                </form>
+                        <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
+                            <div class="flex justify-between text-sm mt-2">
+                                <span class="text-zinc-400">Kesinti Öncesi Net Tutar:</span>
+                                <span id="calc-pre-tax" class="font-medium text-zinc-200">0</span>
                             </div>
-                             <div class="card p-6 lg:p-8">
-                                <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
-                                <form id="withdraw-form">
-                                    <div class="mb-4">
-                                         <label for="withdraw-amount" class="block text-sm font-medium text-zinc-300">Çekilecek Tutar</label>
-                                        <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 mt-1" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-success w-full py-2.5">Çekim Talebi Oluştur</button>
-                                </form>
+                            <div class="flex justify-between text-sm mt-2">
+                                <span class="text-zinc-400">Guild Alış Oranı (<span id="calc-tax-rate-display">%20</span>):</span>
+                                <span id="calc-tax-amount" class="font-medium" style="color: var(--accent-red);">- 0</span>
+                            </div>
+                             <div class="flex justify-between text-lg font-bold mt-4">
+                                <span class="text-white">Oyuncu Başına Düşen:</span>
+                                <span id="calc-net-payout" style="color: var(--accent-green);">0 Silver</span>
                             </div>
                         </div>
                     </div>
-                    <!-- Right Section (Active Players) -->
-                    <div class="lg:col-span-1">
-                        <div class="card p-6 lg:p-8 sticky top-28">
-                            <h2 class="text-xl font-bold mb-4 text-white">Aktif Oyuncular</h2>
-                            <ul id="active-players-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                                <!-- Active players will be dynamically inserted here -->
-                                <p class="text-zinc-400 text-sm">Aktif oyuncu listesi yükleniyor...</p>
-                            </ul>
+                    <div class="space-y-8">
+                        <div id="deposit-form-container" class="card p-6 lg:p-8">
+                            <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
+                            <form id="deposit-form" class="space-y-4">
+                                <div>
+                                    <label for="party-members" class="block text-sm font-medium text-zinc-300">Parti Üyeleri (Virgülle ayır)</label>
+                                    <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2" required></textarea>
+                                </div>
+                                <div>
+                                    <label for="estimated-value" class="block text-sm font-medium text-zinc-300">Tahmini Toplam Tab/Sandık Tutarı</label>
+                                    <input type="number" id="estimated-value" placeholder="Örn: 15000000" class="form-input w-full p-2" required>
+                                </div>
+                                <div>
+                                    <label for="repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı (Repair Cost)</label>
+                                    <input type="number" id="repair-cost" placeholder="Örn: 150000" class="form-input w-full p-2" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-zinc-300">Ekran Görüntüsü</label>
+                                    <div id="file-drop-area" class="file-drop-area mt-1 p-6 text-center cursor-pointer transition-colors">
+                                        <p id="file-info" class="text-zinc-400">Görseli buraya sürükle veya seçmek için tıkla</p>
+                                        <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-secondary w-full py-2.5">Loot Yatırma Talebi Gönder</button>
+                            </form>
+                        </div>
+                         <div class="card p-6 lg:p-8">
+                            <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
+                            <form id="withdraw-form">
+                                <div class="mb-4">
+                                     <label for="withdraw-amount" class="block text-sm font-medium text-zinc-300">Çekilecek Tutar</label>
+                                    <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 mt-1" required>
+                                </div>
+                                <button type="submit" class="btn btn-success w-full py-2.5">Çekim Talebi Oluştur</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -264,7 +255,9 @@
             </div>
 
             <div id="all-players-content" class="hidden">
-                <h2 class="text-xl font-bold mb-4 text-white">Guild Üyeleri</h2>
+                <div class="mb-6">
+                    <input type="text" id="player-search-input" placeholder="Oyuncu adı ara..." class="form-input w-full max-w-md p-3">
+                </div>
                 <div id="all-players-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <!-- All players will be dynamically inserted here -->
                     <p class="text-zinc-400 col-span-full">Oyuncu listesi yükleniyor...</p>
@@ -273,12 +266,30 @@
         </div>
     </div>
    
+    <!-- Send Money Modal -->
+    <div id="send-money-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="card w-full max-w-sm p-6">
+            <h2 class="text-xl font-bold mb-2 text-white">Bakiye Gönder</h2>
+            <p class="text-zinc-400 mb-4">Hedef Oyuncu: <span id="modal-player-name" class="font-bold text-amber-400"></span></p>
+            <form id="send-money-form">
+                <div>
+                    <label for="modal-transfer-amount" class="block text-sm font-medium text-zinc-300">Gönderilecek Tutar</label>
+                    <input id="modal-transfer-amount" type="number" placeholder="Örn: 1000000" class="form-input w-full p-2 mt-1" required>
+                </div>
+                <div class="flex items-center gap-4 mt-6">
+                    <button type="button" id="modal-close-button" class="btn btn-secondary w-full py-2.5">İptal</button>
+                    <button type="submit" id="modal-send-button" class="btn btn-success w-full py-2.5">Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="notification" class="fixed top-24 right-5 text-white py-2 px-5 rounded-lg shadow-lg hidden card"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const DISCORD_CLIENT_ID = "1412951643741356215";
@@ -299,7 +310,7 @@
         let currentUser = null;
         let guildSettings = { taxRate: 0.20 }; 
         let tempDiscordUser = null; 
-        let presenceInterval = null; // Aktiflik durumu için interval'i tutacak
+        let targetPlayerForTransfer = null;
 
         const loginView = document.getElementById('login-view');
         const linkAccountView = document.getElementById('link-account-view');
@@ -311,6 +322,7 @@
         const tabAction = document.getElementById('tab-action');
         const tabHistory = document.getElementById('tab-history');
         const tabAllPlayers = document.getElementById('tab-all-players');
+        const sendMoneyModal = document.getElementById('send-money-modal');
 
         function formatSilver(num) {
             num = Number(num);
@@ -423,79 +435,6 @@
             showDashboard();
         });
 
-        async function updatePresence() {
-            if (!currentUser || !currentUser.id) return;
-            const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
-            try {
-                // HATA DÜZELTMESİ: Firestore'a 'undefined' değeri yazılamaz.
-                // Eğer discordId veya discordAvatar tanımsız ise, yerine 'null' değeri kaydedilir.
-                await setDoc(presenceRef, {
-                    inGameName: currentUser.inGameName,
-                    discordId: currentUser.discordId ?? null,
-                    discordAvatar: currentUser.discordAvatar ?? null,
-                    lastSeen: serverTimestamp()
-                });
-            } catch (error) {
-                console.error("Varlık güncellenemedi:", error);
-            }
-        }
-
-        // ÖNEMLİ NOT: "Aktif oyuncular dinlenirken hata: FirebaseError: Missing or insufficient permissions."
-        // hatası alıyorsanız, bu bir kod hatası değil, Firestore veritabanı güvenlik kurallarınızın eksik
-        // olmasından kaynaklanır. Bu özelliği çalıştırmak için Firebase projenizin Firestore veritabanı
-        // kurallarını aşağıdaki gibi güncellemeniz gerekmektedir:
-        //
-        // rules_version = '2';
-        // service cloud.firestore {
-        //   match /databases/{database}/documents {
-        //     // Bu kural, oturum açmış tüm kullanıcıların /public/data altındaki her şeye erişmesine izin verir.
-        //     match /artifacts/{appId}/public/data/{document=**} {
-        //       allow read, write: if request.auth != null;
-        //     }
-        //   }
-        // }
-        function listenForActivePlayers() {
-            const listEl = document.getElementById('active-players-list');
-            const presenceRef = collection(db, `artifacts/${appId}/public/data/presence`);
-            
-            const sixtySecondsAgo = new Date(Date.now() - 60000);
-            const q = query(presenceRef, where("lastSeen", ">", sixtySecondsAgo));
-
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    listEl.innerHTML = `<p class="text-zinc-400 text-sm">Şu an aktif oyuncu yok.</p>`;
-                    return;
-                }
-                
-                const playersHtml = snapshot.docs.map(doc => {
-                    const player = doc.data();
-                    let avatarUrl = 'https://placehold.co/32x32/27272A/E4E4E7?text=..';
-                    if (player.discordId) {
-                         if (player.discordAvatar) {
-                            avatarUrl = `https://cdn.discordapp.com/avatars/${player.discordId}/${player.discordAvatar}.png`;
-                        } else {
-                            const defaultAvatarIndex = (parseInt(player.discordId) >> 22) % 6;
-                            avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-                        }
-                    }
-                   
-                    return `
-                        <li class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <img src="${avatarUrl}" class="w-8 h-8 rounded-full">
-                                <span class="font-medium text-zinc-200">${player.inGameName}</span>
-                            </div>
-                            <div class="w-2.5 h-2.5 rounded-full" style="background-color: var(--accent-green);"></div>
-                        </li>
-                    `;
-                }).join('');
-                listEl.innerHTML = playersHtml;
-            }, (error) => {
-                console.error("Aktif oyuncular dinlenirken hata:", error);
-                listEl.innerHTML = `<p class="text-red-400 text-sm">Liste yüklenemedi. Lütfen konsolu kontrol edip gerekli Firestore index'ini oluşturun.</p>`;
-            });
-        }
-
         function listenForAllPlayers() {
             const listEl = document.getElementById('all-players-list');
             const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
@@ -506,25 +445,16 @@
                     return;
                 }
                 
-                const players = snapshot.docs.map(doc => doc.data());
+                const players = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
                 players.sort((a, b) => a.inGameName.localeCompare(b.inGameName));
 
                 const playersHtml = players.map(player => {
-                    let avatarUrl = 'https://placehold.co/48x48/27272A/E4E4E7?text=..';
-                     if (player.discordId) {
-                         if (player.discordAvatar) {
-                            avatarUrl = `https://cdn.discordapp.com/avatars/${player.discordId}/${player.discordAvatar}.png`;
-                        } else {
-                            const defaultAvatarIndex = (parseInt(player.discordId) >> 22) % 6;
-                            avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-                        }
-                    }
+                    const avatarUrl = 'https://render.albiononline.com/v1/destiny/ADVENTURER_ADEPT.png?locale=en';
                     return `
-                        <div class="card p-4 flex items-center gap-4">
-                            <img src="${avatarUrl}" class="w-12 h-12 rounded-full">
+                        <div class="card p-4 flex items-center gap-4 cursor-pointer hover:border-amber-400 transition-colors player-card" data-player-id="${player.id}" data-player-name="${player.inGameName}">
+                            <img src="${avatarUrl}" class="w-12 h-12 rounded-full bg-zinc-800">
                             <div>
                                 <p class="font-bold text-white">${player.inGameName}</p>
-                                <p class="text-sm font-medium" style="color: var(--accent-green);">${formatSilver(player.balance || 0)}</p>
                             </div>
                         </div>
                     `;
@@ -536,16 +466,6 @@
             });
         }
        
-        async function goOffline() {
-             if (!currentUser || !currentUser.id) return;
-             const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
-             try {
-                await deleteDoc(presenceRef);
-             } catch(error) {
-                console.error("Çevrimdışı olurken hata:", error);
-             }
-        }
-
         async function showDashboard() {
             loginView.classList.add('hidden');
             linkAccountView.classList.add('hidden');
@@ -568,18 +488,13 @@
             const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
             onSnapshot(userRef, (doc) => {
                 if(doc.exists()){
-                    const newBalance = doc.data().balance || 0;
-                    currentUser.balance = newBalance;
-                    document.getElementById('player-balance').textContent = `${formatSilver(newBalance)} Silver`;
+                    const userData = doc.data();
+                    currentUser.balance = userData.balance || 0;
+                    document.getElementById('player-balance').textContent = `${formatSilver(currentUser.balance)} Silver`;
                 }
             });
             listenToUserHistory();
             listenForAllPlayers();
-
-            updatePresence(); 
-            if(presenceInterval) clearInterval(presenceInterval); 
-            presenceInterval = setInterval(updatePresence, 30000); 
-            listenForActivePlayers(); 
         }
        
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
@@ -707,31 +622,115 @@
             calculatePayout();
         }
 
-        tabAction.addEventListener('click', () => { 
-            tabAction.classList.add('active'); 
-            tabHistory.classList.remove('active'); 
-            tabAllPlayers.classList.remove('active');
-            actionContent.classList.remove('hidden'); 
-            historyContent.classList.add('hidden');
-            allPlayersContent.classList.add('hidden');
-        });
-        tabHistory.addEventListener('click', () => { 
-            tabHistory.classList.add('active'); 
-            tabAction.classList.remove('active'); 
-            tabAllPlayers.classList.remove('active');
-            historyContent.classList.remove('hidden'); 
-            actionContent.classList.add('hidden'); 
-            allPlayersContent.classList.add('hidden');
-        });
-        tabAllPlayers.addEventListener('click', () => { 
-            tabAllPlayers.classList.add('active'); 
-            tabAction.classList.remove('active'); 
-            tabHistory.classList.remove('active'); 
-            allPlayersContent.classList.remove('hidden'); 
-            actionContent.classList.add('hidden'); 
-            historyContent.classList.add('hidden'); 
+        // Tab Switching Logic
+        function switchTab(activeTab) {
+            [tabAction, tabHistory, tabAllPlayers].forEach(tab => tab.classList.remove('active'));
+            [actionContent, historyContent, allPlayersContent].forEach(content => content.classList.add('hidden'));
+            activeTab.button.classList.add('active');
+            activeTab.content.classList.remove('hidden');
+        }
+        tabAction.addEventListener('click', () => switchTab({ button: tabAction, content: actionContent }));
+        tabHistory.addEventListener('click', () => switchTab({ button: tabHistory, content: historyContent }));
+        tabAllPlayers.addEventListener('click', () => switchTab({ button: tabAllPlayers, content: allPlayersContent }));
+
+
+        // Player Search Filter Logic
+        document.getElementById('player-search-input').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const players = document.querySelectorAll('#all-players-list .player-card');
+            players.forEach(player => {
+                const playerName = player.dataset.playerName.toLowerCase();
+                if (playerName.includes(searchTerm)) {
+                    player.style.display = 'flex';
+                } else {
+                    player.style.display = 'none';
+                }
+            });
         });
 
+        // Send Money Modal Logic
+        document.getElementById('all-players-list').addEventListener('click', (e) => {
+            const card = e.target.closest('.player-card');
+            if (card) {
+                const playerId = card.dataset.playerId;
+                const playerName = card.dataset.playerName;
+                if (playerId === currentUser.id) {
+                    showNotification("Kendinize bakiye gönderemezsiniz.", true);
+                    return;
+                }
+                targetPlayerForTransfer = { id: playerId, name: playerName };
+                document.getElementById('modal-player-name').textContent = playerName;
+                sendMoneyModal.classList.remove('hidden');
+            }
+        });
+
+        function closeModal() {
+            sendMoneyModal.classList.add('hidden');
+            document.getElementById('send-money-form').reset();
+            targetPlayerForTransfer = null;
+        }
+        document.getElementById('modal-close-button').addEventListener('click', closeModal);
+        sendMoneyModal.addEventListener('click', (e) => { if(e.target === sendMoneyModal) closeModal(); });
+        
+        document.getElementById('send-money-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amountInput = document.getElementById('modal-transfer-amount');
+            const sendButton = document.getElementById('modal-send-button');
+            const amount = parseInt(amountInput.value);
+
+            if (!targetPlayerForTransfer || !amount || amount <= 0) {
+                return showNotification("Lütfen geçerli bir tutar girin.", true);
+            }
+            if (amount > currentUser.balance) {
+                return showNotification("Bakiyeniz bu transfer için yetersiz.", true);
+            }
+            
+            sendButton.disabled = true;
+            sendButton.textContent = "Gönderiliyor...";
+            
+            try {
+                const fromRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
+                const toRef = doc(db, `artifacts/${appId}/public/data/users`, targetPlayerForTransfer.id);
+                
+                // Batch write for atomic update
+                const batch = writeBatch(db);
+                
+                // Fetch receiver's current data to get their balance
+                const toDoc = await getDoc(toRef);
+                if (!toDoc.exists()) throw new Error("Alıcı kullanıcı bulunamadı.");
+                const receiverData = toDoc.data();
+
+                const newSenderBalance = currentUser.balance - amount;
+                const newReceiverBalance = (receiverData.balance || 0) + amount;
+                
+                batch.update(fromRef, { balance: newSenderBalance });
+                batch.update(toRef, { balance: newReceiverBalance });
+
+                const transferLogRef = doc(collection(db, `artifacts/${appId}/public/data/transfers`));
+                batch.set(transferLogRef, {
+                    fromId: currentUser.id,
+                    fromName: currentUser.inGameName,
+                    toId: targetPlayerForTransfer.id,
+                    toName: targetPlayerForTransfer.name,
+                    amount: amount,
+                    timestamp: serverTimestamp()
+                });
+
+                await batch.commit();
+
+                showNotification(`${formatSilver(amount)} silver, ${targetPlayerForTransfer.name} adlı oyuncuya başarıyla gönderildi.`);
+                closeModal();
+            } catch (error) {
+                console.error("Transfer error: ", error);
+                showNotification("Transfer sırasında bir hata oluştu.", true);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = "Gönder";
+            }
+        });
+
+
+        // File Drop Area Logic
         const dropArea = document.getElementById('file-drop-area');
         const fileInput = document.getElementById('screenshot-file');
         const fileInfo = document.getElementById('file-info');
@@ -762,11 +761,8 @@
             } catch (error) { console.error("Auth error", error); }
         }
 
-        window.addEventListener('beforeunload', goOffline);
-
         initializeAppAndAuth();
     </script>
 </body>
 </html>
-
 
