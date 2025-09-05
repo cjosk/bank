@@ -472,16 +472,7 @@
             dashboardView.classList.remove('hidden');
             document.getElementById('player-name').textContent = currentUser.inGameName;
            
-            if (currentUser.discordId) {
-                if (currentUser.discordAvatar) {
-                    document.getElementById('header-discord-avatar').src = `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.discordAvatar}.png`;
-                } else {
-                    const defaultAvatarIndex = (parseInt(currentUser.discordId) >> 22) % 6;
-                    document.getElementById('header-discord-avatar').src = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
-                }
-            } else {
-                document.getElementById('header-discord-avatar').src = 'https://placehold.co/64x64/27272A/E4E4E7?text=..';
-            }
+            document.getElementById('header-discord-avatar').src = 'https://i.ibb.co/JWqfJVHv/Ekran-g-r-nt-s-2025-09-06-000957-removebg-preview.png';
            
             await loadGuildSettings();
 
