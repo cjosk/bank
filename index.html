@@ -107,6 +107,17 @@
             border-color: var(--accent-gold);
             background-color: rgba(245, 158, 11, 0.1);
         }
+        
+        .marquee-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 25s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -148,7 +159,7 @@
                         <p class="text-sm text-zinc-400">[SUP] Team Supremacy</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-6 sm:gap-8 mt-6 sm:mt-0">
+                <div class="flex items-center gap-4 mt-6 sm:mt-0">
                     <div class="text-right">
                         <p class="text-xs text-zinc-400 font-medium tracking-wider">GUILD ALIŞ ORANI</p>
                         <div class="flex items-center justify-end gap-2 mt-1">
@@ -163,8 +174,28 @@
                              <img src="https://i.hizliresim.com/tsb3m7q.png" class="w-8 h-8">
                          </div>
                     </div>
+                    <div class="relative ml-4">
+                        <button id="notification-button" class="text-zinc-400 hover:text-white transition-colors">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                            <span id="notification-indicator" class="hidden absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-zinc-800"></span>
+                        </button>
+                        <div id="notification-panel" class="hidden absolute right-0 mt-3 w-80 sm:w-96 card p-0 overflow-hidden z-50">
+                            <div class="p-3 border-b border-zinc-700">
+                                <h3 class="font-bold text-white text-center">Bildirimler</h3>
+                            </div>
+                            <div id="notification-list" class="max-h-96 overflow-y-auto">
+                                <p class="text-zinc-400 text-sm p-4 text-center">Yeni bildirim yok.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </header>
+
+            <div id="announcement-banner" class="w-full bg-zinc-900/50 text-amber-400 py-2.5 overflow-hidden border-y border-zinc-800 mb-8 rounded-lg">
+                <div class="marquee-content whitespace-nowrap">
+                    <span id="announcement-text" class="px-8">Duyurular yükleniyor...</span>
+                </div>
+            </div>
            
             <div class="flex justify-between items-center mb-8 border-b-2 border-zinc-800">
                 <nav class="flex -mb-px space-x-6" aria-label="Tabs">
@@ -333,7 +364,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, or } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, or, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const DISCORD_CLIENT_ID = "1412951643741356215";
@@ -355,6 +386,7 @@
         let guildSettings = { taxRate: 0.20 }; 
         let tempDiscordUser = null; 
         let targetPlayerForTransfer = null;
+        let unreadNotifications = [];
 
         const loginView = document.getElementById('login-view');
         const linkAccountView = document.getElementById('link-account-view');
@@ -370,6 +402,11 @@
         const howItWorksModal = document.getElementById('how-it-works-modal');
         const howItWorksButton = document.getElementById('how-it-works-button');
         const howItWorksCloseButton = document.getElementById('how-it-works-close-button');
+        const announcementText = document.getElementById('announcement-text');
+        const notificationButton = document.getElementById('notification-button');
+        const notificationIndicator = document.getElementById('notification-indicator');
+        const notificationPanel = document.getElementById('notification-panel');
+        const notificationList = document.getElementById('notification-list');
 
 
         function formatSilver(num) {
@@ -534,7 +571,74 @@
             });
             listenToUserHistory();
             listenForAllPlayers();
+            listenToAnnouncements();
+            listenToNotifications();
         }
+
+        function listenToAnnouncements() {
+            const announcementsRef = collection(db, `artifacts/${appId}/public/data/announcements`);
+            const q = query(announcementsRef, where("active", "==", true), orderBy("createdAt", "desc"), limit(1));
+
+            onSnapshot(q, (snapshot) => {
+                if (snapshot.empty) {
+                    announcementText.textContent = "Team Supremacy'e hoş geldiniz! Güncel duyuru bulunmamaktadır.";
+                } else {
+                    const announcement = snapshot.docs[0].data();
+                    announcementText.textContent = `📢 ${announcement.text}`;
+                }
+                const content = announcementText.parentElement;
+                content.style.animation = 'none';
+                void content.offsetWidth; // Trigger reflow
+                content.style.animation = null; 
+            }, (error) => {
+                console.error("Duyurular getirilirken hata:", error);
+                announcementText.textContent = "Duyurular yüklenemedi.";
+            });
+        }
+        
+        function listenToNotifications() {
+            const notificationsRef = collection(db, `artifacts/${appId}/public/data/users/${currentUser.id}/notifications`);
+            const q = query(notificationsRef, orderBy("timestamp", "desc"), limit(20));
+
+            onSnapshot(q, (snapshot) => {
+                const notifications = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                unreadNotifications = notifications.filter(n => !n.read);
+
+                if (unreadNotifications.length > 0) {
+                    notificationIndicator.classList.remove('hidden');
+                } else {
+                    notificationIndicator.classList.add('hidden');
+                }
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = `<p class="text-zinc-400 text-sm p-4 text-center">Yeni bildirim yok.</p>`;
+                    return;
+                }
+
+                notificationList.innerHTML = notifications.map(notif => {
+                    const isUnreadClass = !notif.read ? 'bg-zinc-700/50' : '';
+                    const date = notif.timestamp?.toDate().toLocaleDateString('tr-TR') || '';
+                    return `
+                        <div class="p-3 border-b border-zinc-700/50 ${isUnreadClass}">
+                            <p class="text-sm text-zinc-200">${notif.text}</p>
+                            <p class="text-xs text-zinc-400 text-right mt-1">${date}</p>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+        
+        notificationButton.addEventListener('click', () => {
+            notificationPanel.classList.toggle('hidden');
+            if (!notificationPanel.classList.contains('hidden') && unreadNotifications.length > 0) {
+                const batch = writeBatch(db);
+                unreadNotifications.forEach(notif => {
+                    const notifRef = doc(db, `artifacts/${appId}/public/data/users/${currentUser.id}/notifications`, notif.id);
+                    batch.update(notifRef, { read: true });
+                });
+                batch.commit().catch(err => console.error("Bildirimler okunmuş olarak işaretlenemedi:", err));
+            }
+        });
        
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -787,6 +891,14 @@
                     transferData.note = note;
                 }
                 batch.set(transferLogRef, transferData);
+                
+                // Create notification for receiver
+                const notificationRef = doc(collection(db, `artifacts/${appId}/public/data/users/${targetPlayerForTransfer.id}/notifications`));
+                batch.set(notificationRef, {
+                    text: `${currentUser.inGameName} size ${formatSilver(amount)} Silver gönderdi.`,
+                    read: false,
+                    timestamp: serverTimestamp()
+                });
 
                 await batch.commit();
 
