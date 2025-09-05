@@ -165,6 +165,7 @@
                 <nav class="flex -mb-px space-x-6" aria-label="Tabs">
                     <button id="tab-action" class="tab-button active py-3 px-1 text-sm font-bold tracking-wider">YENİ İŞLEM</button>
                     <button id="tab-history" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">İŞLEM GEÇMİŞİM</button>
+                    <button id="tab-all-players" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">TÜM OYUNCULAR</button>
                 </nav>
             </div>
 
@@ -261,6 +262,14 @@
                      <p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>
                  </div>
             </div>
+
+            <div id="all-players-content" class="hidden">
+                <h2 class="text-xl font-bold mb-4 text-white">Guild Üyeleri</h2>
+                <div id="all-players-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- All players will be dynamically inserted here -->
+                    <p class="text-zinc-400 col-span-full">Oyuncu listesi yükleniyor...</p>
+                </div>
+            </div>
         </div>
     </div>
    
@@ -298,8 +307,10 @@
         const notification = document.getElementById('notification');
         const actionContent = document.getElementById('action-content');
         const historyContent = document.getElementById('history-content');
+        const allPlayersContent = document.getElementById('all-players-content');
         const tabAction = document.getElementById('tab-action');
         const tabHistory = document.getElementById('tab-history');
+        const tabAllPlayers = document.getElementById('tab-all-players');
 
         function formatSilver(num) {
             num = Number(num);
@@ -412,15 +423,16 @@
             showDashboard();
         });
 
-        // --- YENİ --- Aktiflik durumunu güncelleyen fonksiyon
         async function updatePresence() {
             if (!currentUser || !currentUser.id) return;
             const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
             try {
+                // HATA DÜZELTMESİ: Firestore'a 'undefined' değeri yazılamaz.
+                // Eğer discordId veya discordAvatar tanımsız ise, yerine 'null' değeri kaydedilir.
                 await setDoc(presenceRef, {
                     inGameName: currentUser.inGameName,
-                    discordId: currentUser.discordId,
-                    discordAvatar: currentUser.discordAvatar,
+                    discordId: currentUser.discordId ?? null,
+                    discordAvatar: currentUser.discordAvatar ?? null,
                     lastSeen: serverTimestamp()
                 });
             } catch (error) {
@@ -428,12 +440,24 @@
             }
         }
 
-        // --- YENİ --- Aktif oyuncuları dinleyen fonksiyon
+        // ÖNEMLİ NOT: "Aktif oyuncular dinlenirken hata: FirebaseError: Missing or insufficient permissions."
+        // hatası alıyorsanız, bu bir kod hatası değil, Firestore veritabanı güvenlik kurallarınızın eksik
+        // olmasından kaynaklanır. Bu özelliği çalıştırmak için Firebase projenizin Firestore veritabanı
+        // kurallarını aşağıdaki gibi güncellemeniz gerekmektedir:
+        //
+        // rules_version = '2';
+        // service cloud.firestore {
+        //   match /databases/{database}/documents {
+        //     // Bu kural, oturum açmış tüm kullanıcıların /public/data altındaki her şeye erişmesine izin verir.
+        //     match /artifacts/{appId}/public/data/{document=**} {
+        //       allow read, write: if request.auth != null;
+        //     }
+        //   }
+        // }
         function listenForActivePlayers() {
             const listEl = document.getElementById('active-players-list');
             const presenceRef = collection(db, `artifacts/${appId}/public/data/presence`);
             
-            // Son 60 saniyede aktif olanları sorgula
             const sixtySecondsAgo = new Date(Date.now() - 60000);
             const q = query(presenceRef, where("lastSeen", ">", sixtySecondsAgo));
 
@@ -468,11 +492,50 @@
                 listEl.innerHTML = playersHtml;
             }, (error) => {
                 console.error("Aktif oyuncular dinlenirken hata:", error);
-                listEl.innerHTML = `<p class="text-red-400 text-sm">Liste yüklenemedi.</p>`;
+                listEl.innerHTML = `<p class="text-red-400 text-sm">Liste yüklenemedi. Lütfen konsolu kontrol edip gerekli Firestore index'ini oluşturun.</p>`;
+            });
+        }
+
+        function listenForAllPlayers() {
+            const listEl = document.getElementById('all-players-list');
+            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+            
+            onSnapshot(usersRef, (snapshot) => {
+                if (snapshot.empty) {
+                    listEl.innerHTML = `<p class="text-zinc-400 col-span-full">Guild'de hiç oyuncu bulunamadı.</p>`;
+                    return;
+                }
+                
+                const players = snapshot.docs.map(doc => doc.data());
+                players.sort((a, b) => a.inGameName.localeCompare(b.inGameName));
+
+                const playersHtml = players.map(player => {
+                    let avatarUrl = 'https://placehold.co/48x48/27272A/E4E4E7?text=..';
+                     if (player.discordId) {
+                         if (player.discordAvatar) {
+                            avatarUrl = `https://cdn.discordapp.com/avatars/${player.discordId}/${player.discordAvatar}.png`;
+                        } else {
+                            const defaultAvatarIndex = (parseInt(player.discordId) >> 22) % 6;
+                            avatarUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarIndex}.png`;
+                        }
+                    }
+                    return `
+                        <div class="card p-4 flex items-center gap-4">
+                            <img src="${avatarUrl}" class="w-12 h-12 rounded-full">
+                            <div>
+                                <p class="font-bold text-white">${player.inGameName}</p>
+                                <p class="text-sm font-medium" style="color: var(--accent-green);">${formatSilver(player.balance || 0)}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                listEl.innerHTML = playersHtml;
+            }, (error) => {
+                console.error("Tüm oyuncular dinlenirken hata:", error);
+                listEl.innerHTML = `<p class="text-red-400 col-span-full">Oyuncu listesi yüklenemedi. Lütfen yöneticiye bildirin.</p>`;
             });
         }
        
-        // --- YENİ --- Sayfadan ayrılırken varlık durumunu sil
         async function goOffline() {
              if (!currentUser || !currentUser.id) return;
              const presenceRef = doc(db, `artifacts/${appId}/public/data/presence`, currentUser.id);
@@ -511,12 +574,12 @@
                 }
             });
             listenToUserHistory();
+            listenForAllPlayers();
 
-            // --- YENİ --- Varlık takibini başlat
-            updatePresence(); // Girişte hemen bir kez güncelle
-            if(presenceInterval) clearInterval(presenceInterval); // Önceki interval'i temizle
-            presenceInterval = setInterval(updatePresence, 30000); // Her 30 saniyede bir güncelle
-            listenForActivePlayers(); // Aktif oyuncuları dinlemeye başla
+            updatePresence(); 
+            if(presenceInterval) clearInterval(presenceInterval); 
+            presenceInterval = setInterval(updatePresence, 30000); 
+            listenForActivePlayers(); 
         }
        
         document.getElementById('deposit-form').addEventListener('submit', async (e) => {
@@ -644,8 +707,31 @@
             calculatePayout();
         }
 
-        tabAction.addEventListener('click', () => { tabAction.classList.add('active'); tabHistory.classList.remove('active'); actionContent.classList.remove('hidden'); historyContent.classList.add('hidden'); });
-        tabHistory.addEventListener('click', () => { tabHistory.classList.add('active'); tabAction.classList.remove('active'); historyContent.classList.remove('hidden'); actionContent.classList.add('hidden'); });
+        tabAction.addEventListener('click', () => { 
+            tabAction.classList.add('active'); 
+            tabHistory.classList.remove('active'); 
+            tabAllPlayers.classList.remove('active');
+            actionContent.classList.remove('hidden'); 
+            historyContent.classList.add('hidden');
+            allPlayersContent.classList.add('hidden');
+        });
+        tabHistory.addEventListener('click', () => { 
+            tabHistory.classList.add('active'); 
+            tabAction.classList.remove('active'); 
+            tabAllPlayers.classList.remove('active');
+            historyContent.classList.remove('hidden'); 
+            actionContent.classList.add('hidden'); 
+            allPlayersContent.classList.add('hidden');
+        });
+        tabAllPlayers.addEventListener('click', () => { 
+            tabAllPlayers.classList.add('active'); 
+            tabAction.classList.remove('active'); 
+            tabHistory.classList.remove('active'); 
+            allPlayersContent.classList.remove('hidden'); 
+            actionContent.classList.add('hidden'); 
+            historyContent.classList.add('hidden'); 
+        });
+
         const dropArea = document.getElementById('file-drop-area');
         const fileInput = document.getElementById('screenshot-file');
         const fileInfo = document.getElementById('file-info');
@@ -676,10 +762,11 @@
             } catch (error) { console.error("Auth error", error); }
         }
 
-        // --- YENİ --- Tarayıcı kapatıldığında offline olmak için event listener
         window.addEventListener('beforeunload', goOffline);
 
         initializeAppAndAuth();
     </script>
 </body>
 </html>
+
+
