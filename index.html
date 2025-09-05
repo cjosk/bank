@@ -142,7 +142,7 @@
         <div id="dashboard-view" class="hidden w-full max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
             <header class="flex flex-col sm:flex-row justify-between items-center mb-8 pb-6 border-b border-zinc-700">
                 <div class="flex items-center gap-4">
-                    <img id="header-discord-avatar" src="" class="w-16 h-16 rounded-full border-2 border-zinc-600 object-cover">
+                    <img id="header-discord-avatar" src="" class="w-16 h-16 rounded-xl object-cover">
                     <div>
                         <h1 id="player-name" class="text-2xl font-extrabold text-white"></h1>
                         <p class="text-sm text-zinc-400">[SUP] Team Supremacy</p>
@@ -166,12 +166,13 @@
                 </div>
             </header>
            
-            <div class="mb-8 border-b-2 border-zinc-800">
+            <div class="flex justify-between items-center mb-8 border-b-2 border-zinc-800">
                 <nav class="flex -mb-px space-x-6" aria-label="Tabs">
                     <button id="tab-action" class="tab-button active py-3 px-1 text-sm font-bold tracking-wider">YENİ İŞLEM</button>
                     <button id="tab-history" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">İŞLEM GEÇMİŞİM</button>
                     <button id="tab-all-players" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">TÜM OYUNCULAR</button>
                 </nav>
+                <button id="how-it-works-button" class="btn btn-secondary py-2 px-4 text-sm">Nasıl Çalışır?</button>
             </div>
 
             <div id="action-content">
@@ -284,6 +285,45 @@
         </div>
     </div>
 
+    <!-- How It Works Modal -->
+    <div id="how-it-works-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="card w-full max-w-2xl p-6 lg:p-8 relative">
+            <button id="how-it-works-close-button" class="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-amber-400 text-center">Panel Nasıl Çalışır?</h2>
+            <div class="text-zinc-300 space-y-5 max-h-[70vh] overflow-y-auto pr-4 text-base">
+                <div>
+                    <h3 class="font-bold text-lg text-white mb-2">1. Adım: Giriş ve Hesap Bağlama</h3>
+                    <p>Panele erişmek için Discord hesabınızla giriş yapmanız gerekmektedir. İlk girişinizde, sistem Discord hesabınızı oyundaki karakterinizle eşleştirmek için oyun içi isminizi soracaktır. Bu işlemi sadece bir kez yapmanız yeterlidir.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white mb-2">2. Adım: Bakiye Sistemi</h3>
+                    <p>Bu panel, guild'imizin ortak kasasını yönetmek için bir banka gibi çalışır. Yatırdığınız loot'lar silver'a dönüştürülür ve kişisel bakiyenize eklenir. Bakiyenizle diğer oyunculara transfer yapabilir veya silver olarak çekebilirsiniz.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white mb-2">3. Adım: Loot Yatırma</h3>
+                    <p>Kazandığınız loot'ları guild kasasına yatırmak için "Yeni İşlem" sekmesindeki "Loot Yatır" formunu kullanın. Formda partideki üyeleri, tahmini loot değerini ve tamir masrafını belirtip, istatistiklerin göründüğü bir ekran görüntüsü yüklemeniz gerekir. Talebiniz bir yetkili tarafından incelendikten sonra onaylanır ve bakiye hesaba eklenir.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white mb-2">4. Adım: Silver Çekme</h3>
+                    <p>Bakiyenizdeki silver'ı oyunda teslim almak için "Silver Çek" formunu kullanın. Çekmek istediğiniz tutarı girdiğinizde talebiniz yetkililere iletilir ve en kısa sürede oyun içinde size teslimatı yapılır.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-white mb-2">5. Adım: Oyuncular Arası Transfer</h3>
+                    <p>"Tüm Oyuncular" sekmesinden guild'deki herhangi bir oyuncuya kolayca ve güvenli bir şekilde bakiye transferi yapabilirsiniz. Oyuncunun ismine tıklayıp göndermek istediğiniz tutarı girmeniz yeterlidir. Bu işlem anında gerçekleşir ve kayıt altına alınır.</p>
+                </div>
+                 <div>
+                    <h3 class="font-bold text-lg text-white mb-2">6. Adım: İşlem Geçmişi</h3>
+                    <p>"İşlem Geçmişim" sekmesinden tüm para yatırma ve çekme taleplerinizin durumunu (Beklemede, Onaylandı, Reddedildi) ve detaylarını takip edebilirsiniz.</p>
+                </div>
+                <div class="pt-4 border-t border-zinc-700">
+                    <p class="text-sm text-amber-400 font-semibold">Önemli Not: Tüm işlemler şeffaflık ve güvenlik amacıyla kayıt altına alınmaktadır. Herhangi bir sorun yaşamanız durumunda yetkililerle iletişime geçebilirsiniz.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="notification" class="fixed top-24 right-5 text-white py-2 px-5 rounded-lg shadow-lg hidden card"></div>
 
     <script type="module">
@@ -296,7 +336,7 @@
 
         const firebaseConfig = {
           apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
-          authDomain: "bank-8738a.firebaseapp.com",
+          authDomain: "bank-8a.firebaseapp.com",
           projectId: "bank-8738a",
           storageBucket: "bank-8738a.firebasestorage.app",
           messagingSenderId: "157747262596",
@@ -323,6 +363,10 @@
         const tabHistory = document.getElementById('tab-history');
         const tabAllPlayers = document.getElementById('tab-all-players');
         const sendMoneyModal = document.getElementById('send-money-modal');
+        const howItWorksModal = document.getElementById('how-it-works-modal');
+        const howItWorksButton = document.getElementById('how-it-works-button');
+        const howItWorksCloseButton = document.getElementById('how-it-works-close-button');
+
 
         function formatSilver(num) {
             num = Number(num);
@@ -717,6 +761,22 @@
             } finally {
                 sendButton.disabled = false;
                 sendButton.textContent = "Gönder";
+            }
+        });
+        
+        // How It Works Modal Logic
+        howItWorksButton.addEventListener('click', () => {
+            howItWorksModal.classList.remove('hidden');
+        });
+
+        function closeHowItWorksModal() {
+            howItWorksModal.classList.add('hidden');
+        }
+
+        howItWorksCloseButton.addEventListener('click', closeHowItWorksModal);
+        howItWorksModal.addEventListener('click', (e) => {
+            if (e.target === howItWorksModal) {
+                closeHowItWorksModal();
             }
         });
 
