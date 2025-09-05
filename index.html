@@ -483,7 +483,7 @@
 
             const nameLower = inGameName.toLowerCase();
             const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
-            const batch = writeBatch(db);
+            
             const qNick = query(usersRef, where("inGameName_lowercase", "==", nameLower));
             const nickSnapshot = await getDocs(qNick);
 
@@ -492,9 +492,17 @@
             }
 
             const userDoc = nickSnapshot.docs[0];
-            if (userDoc.data().discordId) {
-                return showNotification("Bu oyun içi isim zaten başka bir Discord hesabına bağlı.", true);
+            const userData = userDoc.data();
+
+            if (userData.discordId) {
+                if (userData.discordId === tempDiscordUser.id) {
+                    return showNotification("Bu oyun içi isim zaten bu Discord hesabına bağlı.", true);
+                } else {
+                    return showNotification("Bu oyun içi isim BAŞKA bir Discord hesabına bağlı. Lütfen bir yetkili ile görüşün.", true);
+                }
             }
+            
+            const batch = writeBatch(db);
 
             batch.update(userDoc.ref, { 
                 discordId: tempDiscordUser.id,
@@ -506,14 +514,14 @@
             batch.set(logRef, {
                 discordId: tempDiscordUser.id,
                 discordUsername: tempDiscordUser.username,
-                inGameName: userDoc.data().inGameName,
+                inGameName: userData.inGameName,
                 timestamp: serverTimestamp()
             });
 
             await batch.commit();
 
             showNotification("Hesap başarıyla bağlandı!");
-            currentUser = { id: userDoc.id, ...userDoc.data(), discordId: tempDiscordUser.id, discordUsername: tempDiscordUser.username, discordAvatar: tempDiscordUser.avatar };
+            currentUser = { id: userDoc.id, ...userData, discordId: tempDiscordUser.id, discordUsername: tempDiscordUser.username, discordAvatar: tempDiscordUser.avatar };
             localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
             linkAccountView.classList.add('hidden');
             showDashboard();
