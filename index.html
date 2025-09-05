@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loot Bank - Team Supremacy</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' rx='6' fill='%231A0B0B'/%3E%3Cstyle%3E.text{font-family:'Inter',sans-serif;font-weight:800;font-size:20px;fill:%23D79A34;text-anchor:middle;dominant-baseline:central;}%3C/style%3E%3Ctext x='16' y='17' class='text'%3ETS%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' rx='6' fill='%231A0B0B'/%3E%3Cpath d='M22 10C22 8 20 7 18 7H14C11.5 7 10 8.5 10 11V12C10 13.5 11 15 13 15H19C21 15 22 16.5 22 18V20C22 22.5 20.5 25 18 25H14C12 25 10 24 10 22' stroke='%23D79A34' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -249,7 +249,7 @@
             </div>
 
             <div id="history-content" class="hidden">
-                 <h2 class="text-xl font-bold mb-4 text-white">Tüm Taleplerim</h2>
+                 <h2 class="text-xl font-bold mb-4 text-white">Tüm İşlemlerim</h2>
                  <div id="user-history-list" class="space-y-4">
                      <p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>
                  </div>
@@ -269,15 +269,19 @@
    
     <!-- Send Money Modal -->
     <div id="send-money-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="card w-full max-w-sm p-6">
+        <div class="card w-full max-w-md p-6">
             <h2 class="text-xl font-bold mb-2 text-white">Bakiye Gönder</h2>
             <p class="text-zinc-400 mb-4">Hedef Oyuncu: <span id="modal-player-name" class="font-bold text-amber-400"></span></p>
-            <form id="send-money-form">
+            <form id="send-money-form" class="space-y-4">
                 <div>
                     <label for="modal-transfer-amount" class="block text-sm font-medium text-zinc-300">Gönderilecek Tutar</label>
                     <input id="modal-transfer-amount" type="number" placeholder="Örn: 1000000" class="form-input w-full p-2 mt-1" required>
                 </div>
-                <div class="flex items-center gap-4 mt-6">
+                <div>
+                    <label for="modal-transfer-note" class="block text-sm font-medium text-zinc-300">Not (İsteğe bağlı)</label>
+                    <textarea id="modal-transfer-note" placeholder="Transfer notu..." class="form-textarea w-full p-2 mt-1" rows="2"></textarea>
+                </div>
+                <div class="flex items-center gap-4 pt-2">
                     <button type="button" id="modal-close-button" class="btn btn-secondary w-full py-2.5">İptal</button>
                     <button type="submit" id="modal-send-button" class="btn btn-success w-full py-2.5">Gönder</button>
                 </div>
@@ -315,7 +319,7 @@
                 </div>
                  <div>
                     <h3 class="font-bold text-lg text-white mb-2">6. Adım: İşlem Geçmişi</h3>
-                    <p>"İşlem Geçmişim" sekmesinden tüm para yatırma ve çekme taleplerinizin durumunu (Beklemede, Onaylandı, Reddedildi) ve detaylarını takip edebilirsiniz.</p>
+                    <p>"İşlem Geçmişim" sekmesinden tüm para yatırma, çekme ve transfer işlemlerinizin durumunu ve detaylarını takip edebilirsiniz.</p>
                 </div>
                 <div class="pt-4 border-t border-zinc-700">
                     <p class="text-sm text-amber-400 font-semibold">Önemli Not: Tüm işlemler şeffaflık ve güvenlik amacıyla kayıt altına alınmaktadır. Herhangi bir sorun yaşamanız durumunda yetkililerle iletişime geçebilirsiniz.</p>
@@ -329,7 +333,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, or } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const DISCORD_CLIENT_ID = "1412951643741356215";
@@ -589,22 +593,51 @@
 
         function listenToUserHistory() {
             const historyListEl = document.getElementById('user-history-list');
-            const renderHistory = async () => {
-                const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
-                const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
-                const depositsQuery = query(depositsRef, where("submitterId", "==", currentUser.id));
-                const withdrawalsQuery = query(withdrawalsRef, where("requesterId", "==", currentUser.id));
-                const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([ getDocs(depositsQuery), getDocs(withdrawalsQuery) ]);
-                const deposits = depositsSnapshot.docs.map(doc => ({ type: 'Loot Yatırma', ...doc.data() }));
-                const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ type: 'Silver Çekim', ...doc.data() }));
-                const allHistory = [...deposits, ...withdrawals].sort((a, b) => {
-                    const dateA = a.processedAt || a.submittedAt || a.requestedAt;
-                    const dateB = b.processedAt || b.submittedAt || b.requestedAt;
-                    if (!dateA || !dateB) return 0; return dateB.toDate() - dateA.toDate();
+            
+            const qDeposits = query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id));
+            const qWithdrawals = query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id));
+            const qTransfers = query(collection(db, `artifacts/${appId}/public/data/transfers`), or(where("fromId", "==", currentUser.id), where("toId", "==", currentUser.id)));
+            
+            const unsubscribes = [
+                onSnapshot(qDeposits, renderHistory),
+                onSnapshot(qWithdrawals, renderHistory),
+                onSnapshot(qTransfers, renderHistory)
+            ];
+            
+            async function renderHistory() {
+                const [depositsSnap, withdrawalsSnap, transfersSnap] = await Promise.all([
+                    getDocs(qDeposits), getDocs(qWithdrawals), getDocs(qTransfers)
+                ]);
+
+                const deposits = depositsSnap.docs.map(doc => ({ id: doc.id, type: 'Loot Yatırma', ...doc.data() }));
+                const withdrawals = withdrawalsSnap.docs.map(doc => ({ id: doc.id, type: 'Silver Çekim', ...doc.data() }));
+                const transfers = transfersSnap.docs.map(doc => ({ id: doc.id, type: 'Transfer', ...doc.data() }));
+
+                const allHistory = [...deposits, ...withdrawals, ...transfers].sort((a, b) => {
+                    const dateA = a.timestamp || a.processedAt || a.submittedAt || a.requestedAt;
+                    const dateB = b.timestamp || b.processedAt || b.submittedAt || b.requestedAt;
+                    if (!dateA || !dateB) return 0; 
+                    return dateB.toDate() - dateA.toDate();
                 });
-                if (allHistory.length === 0) { historyListEl.innerHTML = `<p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>`; return; }
+
+                if (allHistory.length === 0) {
+                    historyListEl.innerHTML = `<p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>`;
+                    return;
+                }
+
                 historyListEl.innerHTML = allHistory.map(item => {
-                    const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
+                    const date = (item.timestamp || item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
+                    
+                    if (item.type === 'Transfer') {
+                        const isSender = item.fromId === currentUser.id;
+                        const otherPlayer = isSender ? item.toName : item.fromName;
+                        const amountClass = isSender ? 'text-red-400' : 'text-green-400';
+                        const prefix = isSender ? '-' : '+';
+                        const title = isSender ? `${otherPlayer} adlı oyuncuya gönderildi` : `${otherPlayer} adlı oyuncudan alındı`;
+                        const noteHtml = item.note ? `<p class="text-xs text-zinc-400 mt-1 italic">"${item.note}"</p>` : '';
+                        return `<div class="card p-4"><div class="flex justify-between items-start"><div><p class="font-bold">${title}</p><p class="text-sm font-semibold ${amountClass}">${prefix}${formatSilver(item.amount || 0)} Silver</p>${noteHtml}</div><div class="text-right flex-shrink-0 ml-4"><span class="text-xs font-bold text-white px-2 py-1 rounded-full bg-blue-500">Transfer</span><p class="text-xs text-zinc-400 mt-2">${date}</p></div></div></div>`;
+                    }
+                    
                     let statusClass, statusText;
                     switch (item.status) {
                         case 'completed': statusClass = 'bg-green-600'; statusText = 'Onaylandı'; break;
@@ -613,18 +646,21 @@
                     }
                     const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs mt-1" style="color:var(--accent-red);">${item.rejectionReason}</p>` : '';
                     let detailsHtml = '';
-                    if (item.type === 'Loot Yatırma') {
+                     if (item.type === 'Loot Yatırma') {
+                        const finalPayout = (item.finalValue || 0) / (item.partyMembers?.length || 1);
+                        const payoutText = item.status === 'completed' ? ` | Oyuncu Başı: <span class="font-semibold text-green-400">${formatSilver(finalPayout)}</span>` : ``;
                         const estimatedValueText = `Tahmini Değer: <span class="font-semibold text-zinc-200">${formatSilver(item.estimatedValue || 0)}</span>`;
                         const repairCostText = `Tamir: <span class="font-semibold text-zinc-200">${formatSilver(item.repairCost || 0)}</span>`;
                         const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" style="color:var(--accent-gold);" class="hover:underline">Görsel</a>` : '';
-                        detailsHtml = `<div class="text-xs text-zinc-400 mt-2 flex flex-wrap gap-x-4 gap-y-1">${estimatedValueText} | ${repairCostText} | ${screenshotLink}</div>`;
+                        
+                        detailsHtml = `<div class="text-xs text-zinc-400 mt-2 flex flex-wrap gap-x-4 gap-y-1">${estimatedValueText} | ${repairCostText} | ${screenshotLink}${payoutText}</div>`;
                     }
+                    
                     const amountText = item.type === 'Silver Çekim' ? `${formatSilver(item.amount || 0)} Silver` : `Parti: ${(item.partyMembers || []).join(', ')}`;
+                    
                     return `<div class="card p-4"><div class="flex justify-between items-start"><div><p class="font-bold">${item.type}</p><p class="text-sm text-zinc-300">${amountText}</p>${detailsHtml}${reasonHtml}</div><div class="text-right flex-shrink-0 ml-4"><span class="text-xs font-bold text-white px-2 py-1 rounded-full ${statusClass}">${statusText}</span><p class="text-xs text-zinc-400 mt-2">${date}</p></div></div></div>`;
                 }).join('');
             };
-            onSnapshot(query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id)), renderHistory);
-            onSnapshot(query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id)), renderHistory);
         }
        
         const calcInputs = ['calc-total-value', 'calc-repair-cost', 'calc-party-count'];
@@ -710,8 +746,10 @@
         document.getElementById('send-money-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amountInput = document.getElementById('modal-transfer-amount');
+            const noteInput = document.getElementById('modal-transfer-note');
             const sendButton = document.getElementById('modal-send-button');
             const amount = parseInt(amountInput.value);
+            const note = noteInput.value.trim();
 
             if (!targetPlayerForTransfer || !amount || amount <= 0) {
                 return showNotification("Lütfen geçerli bir tutar girin.", true);
@@ -727,10 +765,8 @@
                 const fromRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
                 const toRef = doc(db, `artifacts/${appId}/public/data/users`, targetPlayerForTransfer.id);
                 
-                // Batch write for atomic update
                 const batch = writeBatch(db);
                 
-                // Fetch receiver's current data to get their balance
                 const toDoc = await getDoc(toRef);
                 if (!toDoc.exists()) throw new Error("Alıcı kullanıcı bulunamadı.");
                 const receiverData = toDoc.data();
@@ -742,14 +778,15 @@
                 batch.update(toRef, { balance: newReceiverBalance });
 
                 const transferLogRef = doc(collection(db, `artifacts/${appId}/public/data/transfers`));
-                batch.set(transferLogRef, {
-                    fromId: currentUser.id,
-                    fromName: currentUser.inGameName,
-                    toId: targetPlayerForTransfer.id,
-                    toName: targetPlayerForTransfer.name,
-                    amount: amount,
-                    timestamp: serverTimestamp()
-                });
+                const transferData = {
+                    fromId: currentUser.id, fromName: currentUser.inGameName,
+                    toId: targetPlayerForTransfer.id, toName: targetPlayerForTransfer.name,
+                    amount: amount, timestamp: serverTimestamp()
+                };
+                if (note) {
+                    transferData.note = note;
+                }
+                batch.set(transferLogRef, transferData);
 
                 await batch.commit();
 
