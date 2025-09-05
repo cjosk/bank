@@ -478,53 +478,69 @@
 
         document.getElementById('link-account-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitButton = e.target.querySelector('button[type="submit"]');
             const inGameName = document.getElementById('in-game-name-link').value.trim();
             if (!inGameName || !tempDiscordUser) return;
 
-            const nameLower = inGameName.toLowerCase();
-            const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
-            
-            const qNick = query(usersRef, where("inGameName_lowercase", "==", nameLower));
-            const nickSnapshot = await getDocs(qNick);
+            submitButton.disabled = true;
+            submitButton.textContent = "Bağlanıyor...";
 
-            if (nickSnapshot.empty) {
-                return showNotification("Bu isim guild listesinde bulunamadı. Lütfen admin ile görüşün.", true);
-            }
+            try {
+                const nameLower = inGameName.toLowerCase();
+                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                
+                const qNick = query(usersRef, where("inGameName_lowercase", "==", nameLower));
+                const nickSnapshot = await getDocs(qNick);
 
-            const userDoc = nickSnapshot.docs[0];
-            const userData = userDoc.data();
-
-            if (userData.discordId) {
-                if (userData.discordId === tempDiscordUser.id) {
-                    return showNotification("Bu oyun içi isim zaten bu Discord hesabına bağlı.", true);
-                } else {
-                    return showNotification("Bu oyun içi isim BAŞKA bir Discord hesabına bağlı. Lütfen bir yetkili ile görüşün.", true);
+                if (nickSnapshot.empty) {
+                    throw new Error("Bu isim guild listesinde bulunamadı. Lütfen admin ile görüşün.");
                 }
+
+                const userDoc = nickSnapshot.docs[0];
+                const userData = userDoc.data();
+
+                if (userData.discordId) {
+                    if (userData.discordId === tempDiscordUser.id) {
+                        throw new Error("Bu oyun içi isim zaten bu Discord hesabına bağlı.");
+                    } else {
+                        throw new Error("Bu oyun içi isim BAŞKA bir Discord hesabına bağlı. Lütfen bir yetkili ile görüşün.");
+                    }
+                }
+                
+                const batch = writeBatch(db);
+
+                batch.update(userDoc.ref, { 
+                    discordId: tempDiscordUser.id,
+                    discordUsername: tempDiscordUser.username,
+                    discordAvatar: tempDiscordUser.avatar
+                });
+
+                const logRef = doc(collection(db, `artifacts/${appId}/public/data/registration_logs`));
+                batch.set(logRef, {
+                    discordId: tempDiscordUser.id,
+                    discordUsername: tempDiscordUser.username,
+                    inGameName: userData.inGameName,
+                    timestamp: serverTimestamp()
+                });
+
+                await batch.commit();
+
+                showNotification("Hesap başarıyla bağlandı!");
+                currentUser = { id: userDoc.id, ...userData, discordId: tempDiscordUser.id, discordUsername: tempDiscordUser.username, discordAvatar: tempDiscordUser.avatar };
+                localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
+                linkAccountView.classList.add('hidden');
+                showDashboard();
+            } catch (error) {
+                console.error("Hesap bağlama hatası:", error);
+                if (error.code === 'permission-denied') {
+                    showNotification("Kayıt başarısız oldu: Veritabanı izinleri eksik. Lütfen bir yetkiliyle iletişime geçin.", true);
+                } else {
+                    showNotification(error.message || "Hesap bağlanırken bir hata oluştu.", true);
+                }
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = "Hesabı Bağla";
             }
-            
-            const batch = writeBatch(db);
-
-            batch.update(userDoc.ref, { 
-                discordId: tempDiscordUser.id,
-                discordUsername: tempDiscordUser.username,
-                discordAvatar: tempDiscordUser.avatar
-            });
-
-            const logRef = doc(collection(db, `artifacts/${appId}/public/data/registration_logs`));
-            batch.set(logRef, {
-                discordId: tempDiscordUser.id,
-                discordUsername: tempDiscordUser.username,
-                inGameName: userData.inGameName,
-                timestamp: serverTimestamp()
-            });
-
-            await batch.commit();
-
-            showNotification("Hesap başarıyla bağlandı!");
-            currentUser = { id: userDoc.id, ...userData, discordId: tempDiscordUser.id, discordUsername: tempDiscordUser.username, discordAvatar: tempDiscordUser.avatar };
-            localStorage.setItem('loggedInUser', JSON.stringify(currentUser));
-            linkAccountView.classList.add('hidden');
-            showDashboard();
         });
 
         function listenForAllPlayers() {
