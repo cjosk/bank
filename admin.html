@@ -193,9 +193,9 @@
                     <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
                     <div class="space-y-4">
                         <div>
-                            <label for="purchase-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Alış Oranı (%)</label>
-                            <input id="purchase-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 80" class="form-input w-full p-2 rounded-md">
-                            <p class="text-xs text-gray-400 mt-1">Loot'un net değerinin yüzde kaçının oyunculara ödeneceğini belirtir. (Kesinti = 100 - Alış Oranı)</p>
+                            <label for="purchase-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Kesinti Oranı (%)</label>
+                            <input id="purchase-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 20" class="form-input w-full p-2 rounded-md">
+                            <p class="text-xs text-gray-400 mt-1">Loot'un net değerinden yüzde kaç kesinti yapılacağını belirtir.</p>
                         </div>
                         <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
                     </div>
@@ -444,9 +444,9 @@
                 const partyMembers = data.partyMembers || [];
                 const netLootValue = totalSilver;
                 
-                // Kullanıcının isteği üzerine "Alış Oranı"nın oyuncu payı olarak yorumlanması için formül düzenlendi.
-                const totalPlayerPayout = netLootValue * (1 - guildSettings.taxRate);
-                const guildProfit = netLootValue - totalPlayerPayout;
+                // Kullanıcının sağladığı formüle göre hesaplama mantığı güncellendi.
+                const guildProfit = netLootValue * guildSettings.taxRate;
+                const totalPlayerPayout = netLootValue - guildProfit;
 
                 const amountPerMember = partyMembers.length > 0 ? Math.floor(totalPlayerPayout / partyMembers.length) : 0;
                 
@@ -638,8 +638,8 @@
                 const settingsDoc = await getDoc(settingsRef);
                 if (settingsDoc.exists()) {
                     guildSettings = settingsDoc.data();
-                    const purchaseRate = (1 - (guildSettings.taxRate || 0)) * 100;
-                    document.getElementById('purchase-rate-input').value = purchaseRate.toFixed(2);
+                    const cutRate = (guildSettings.taxRate || 0) * 100;
+                    document.getElementById('purchase-rate-input').value = cutRate.toFixed(0);
                 }
             }
             
@@ -719,9 +719,9 @@
             });
 
             document.getElementById('save-settings-button').addEventListener('click', async () => { 
-                const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value); 
-                if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true); 
-                const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15)); 
+                const cutRate = parseFloat(document.getElementById('purchase-rate-input').value); 
+                if (isNaN(cutRate) || cutRate < 0 || cutRate > 100) return showNotification("Geçersiz kesinti oranı. 0-100 arası bir değer girin.", true); 
+                const taxRate = parseFloat((cutRate / 100).toPrecision(15)); 
                 const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); 
                 await setDoc(settingsRef, { taxRate: taxRate }, { merge: true }); 
                 await loadGuildSettings(); 
