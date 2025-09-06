@@ -442,10 +442,12 @@
             window.calculateAndShowDistribution = (id, data) => {
                 const totalSilver = parseInt(document.getElementById(`amount-${id}`).value) || 0;
                 const partyMembers = data.partyMembers || [];
+                const netLootValue = totalSilver;
                 
-                const netLootValue = totalSilver; // Tamir masrafı admin tarafından girilen tutardan zaten düşüldüğü varsayılıyor.
-                const guildProfit = netLootValue * guildSettings.taxRate;
-                const totalPlayerPayout = netLootValue - guildProfit;
+                // Kullanıcının isteği üzerine "Alış Oranı"nın oyuncu payı olarak yorumlanması için formül düzenlendi.
+                const totalPlayerPayout = netLootValue * (1 - guildSettings.taxRate);
+                const guildProfit = netLootValue - totalPlayerPayout;
+
                 const amountPerMember = partyMembers.length > 0 ? Math.floor(totalPlayerPayout / partyMembers.length) : 0;
                 
                 const resultsEl = document.getElementById(`calc-results-${id}`);
