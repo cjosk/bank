@@ -88,7 +88,7 @@
                               </tr>
                           </thead>
                          <tbody id="p2p-logs-list">
-                             <tr><td colspan="4" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>
+                            <tr><td colspan="4" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>
                          </tbody>
                      </table>
                  </div>
@@ -181,7 +181,7 @@
                               </tr>
                           </thead>
                          <tbody id="registration-logs-list">
-                             <tr><td colspan="3" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>
+                            <tr><td colspan="3" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>
                          </tbody>
                      </table>
                  </div>
@@ -190,16 +190,16 @@
             <!-- Ayarlar Sekmesi -->
             <div id="settings-content" class="tab-content hidden">
                  <div class="card p-6 rounded-lg max-w-lg mx-auto">
-                   <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
-                   <div class="space-y-4">
-                       <div>
-                           <label for="guild-tax-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Kesinti Oranı (%)</label>
-                           <input id="guild-tax-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 20" class="form-input w-full p-2 rounded-md">
-                           <p class="text-xs text-gray-400 mt-1">Loot'un net değerinden yüzde kaç kesinti yapılacağını belirtir.</p>
-                       </div>
-                       <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
-                   </div>
-              </div>
+                    <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="guild-purchase-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Alış Oranı (%)</label>
+                            <input id="guild-purchase-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 80" class="form-input w-full p-2 rounded-md">
+                            <p class="text-xs text-gray-400 mt-1">Loot'un net değerinin yüzde kaçının oyunculara ödeneceğini belirtir. (Kesinti = 100 - Alış Oranı)</p>
+                        </div>
+                        <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
+                    </div>
+               </div>
             </div>
         </div>
     </div>
@@ -237,46 +237,55 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- SABİTLER ---
-        // !!! LÜTFEN DİKKAT: "YOUR_REAL_DISCORD_CLIENT_ID" yazan yere Discord Developer Portal'dan aldığınız gerçek Client ID'nizi yapıştırın.
-        const DISCORD_CLIENT_ID = "1412951643741356215"; 
-        const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA"; // Albion Online Guild ID'sini girin
-        const ITEM_LIST_URL = 'https://raw.githubusercontent.com/cjosk/bank/refs/heads/main/items.txt';
+        const DISCORD_CLIENT_ID = "11412951643741356215"; // Botunuzun gerçek Client ID'sini girin
+        const GUILD_ID = "836109355745771520"; // Albion Online Guild ID'sini girin
+        const ITEM_LIST_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt';
         
         // --- GLOBAL DEĞİŞKENLER ---
         let guildSettings = { taxRate: 0.20 }; // Varsayılan: %20 kesinti
         let ITEM_ID_MAP = {};
         
         // --- FIREBASE YAPILANDIRMASI ---
-        let app, auth, db, appId;
-
-        // --- YARDIMCI FONKSİYONLAR ---
-        function formatSilver(num) {
-            num = Number(num);
-            if (isNaN(num)) return '0';
-            return num.toLocaleString('tr-TR');
-        }
-
-        function showNotification(message, isError = false) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.toggle('bg-red-500', isError);
-            notification.classList.toggle('bg-green-500', !isError);
-            notification.classList.remove('hidden');
-            setTimeout(() => notification.classList.add('hidden'), 4000);
-        }
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-yUauI8_nz4Ymc-BvHado5zoushIwQk4",
+            authDomain: "bank-8738a.firebaseapp.com",
+            projectId: "bank-8738a",
+            storageBucket: "bank-8738a.appspot.com",
+            messagingSenderId: "157747262596",
+            appId: "1:157747262596:web:1f60a45a33c0c5a702fed1"
+        };
+        
+        const appId = firebaseConfig.appId || 'default-albion-app'; 
+        let app, auth, db;
         
         // --- UYGULAMA BAŞLANGICI ---
         document.addEventListener('DOMContentLoaded', () => {
             const adminLoginView = document.getElementById('admin-login-view');
             const adminDashboardView = document.getElementById('admin-dashboard-view');
+            const notification = document.getElementById('notification');
             const tabs = document.querySelectorAll('.tab-button');
             const contents = document.querySelectorAll('.tab-content');
             const rejectionModal = document.getElementById('rejection-modal');
             let rejectionInfo = {};
+
+            // --- YARDIMCI FONKSİYONLAR ---
+            function formatSilver(num) {
+                num = Number(num);
+                if (isNaN(num)) return '0';
+                return num.toLocaleString('tr-TR');
+            }
+
+            function showNotification(message, isError = false) {
+                notification.textContent = message;
+                notification.classList.toggle('bg-red-500', isError);
+                notification.classList.toggle('bg-green-500', !isError);
+                notification.classList.remove('hidden');
+                setTimeout(() => notification.classList.add('hidden'), 4000);
+            }
 
             // --- MODAL FONKSİYONLARI ---
             window.openRejectionModal = (collectionName, id) => {
@@ -627,8 +636,9 @@
                 const settingsDoc = await getDoc(settingsRef);
                 if (settingsDoc.exists()) {
                     guildSettings = settingsDoc.data();
-                    const taxRatePercentage = (guildSettings.taxRate || 0) * 100;
-                    document.getElementById('guild-tax-rate-input').value = taxRatePercentage.toFixed(0);
+                    // "Alış Oranı"nı göstermek için, kayıtlı kesinti oranını 1'den çıkarıp 100 ile çarpıyoruz.
+                    const purchaseRatePercentage = (1 - (guildSettings.taxRate || 0)) * 100;
+                    document.getElementById('guild-purchase-rate-input').value = purchaseRatePercentage.toFixed(0);
                 }
             }
             
@@ -673,7 +683,7 @@
                             const id = parts[0].trim();
                             const name = parts[1].trim();
                             if(name) {
-                                ITEM_ID_MAP[name.toLowerCase()] = id;
+                               ITEM_ID_MAP[name.toLowerCase()] = id;
                             }
                         }
                     });
@@ -708,9 +718,10 @@
             });
 
             document.getElementById('save-settings-button').addEventListener('click', async () => { 
-                const taxRatePercentage = parseFloat(document.getElementById('guild-tax-rate-input').value); 
-                if (isNaN(taxRatePercentage) || taxRatePercentage < 0 || taxRatePercentage > 100) return showNotification("Geçersiz kesinti oranı. 0-100 arası bir değer girin.", true); 
-                const taxRateDecimal = parseFloat((taxRatePercentage / 100).toPrecision(15)); 
+                const purchaseRatePercentage = parseFloat(document.getElementById('guild-purchase-rate-input').value); 
+                if (isNaN(purchaseRatePercentage) || purchaseRatePercentage < 0 || purchaseRatePercentage > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true); 
+                // "Alış Oranı"nı (örn: 80) alıp, veritabanına kaydedilecek "Kesinti Oranı"na (örn: 0.20) çeviriyoruz.
+                const taxRateDecimal = parseFloat((1 - (purchaseRatePercentage / 100)).toPrecision(15)); 
                 const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); 
                 await setDoc(settingsRef, { taxRate: taxRateDecimal }, { merge: true }); 
                 await loadGuildSettings(); 
@@ -779,43 +790,22 @@
             
             // --- UYGULAMA BAŞLATMA ---
             async function initializeAppAndAuth() {
-                try {
-                    // Global değişkenlerden Firebase yapılandırmasını al
-                    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-                    appId = typeof __app_id !== 'undefined' ? __app_id : 'default-albion-app';
-                    
-                    if (!firebaseConfig.apiKey) {
-                        showNotification("Firebase yapılandırması bulunamadı. Uygulama başlatılamıyor.", true);
-                        console.error("Firebase config is missing!");
-                        return;
-                    }
-
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-
-                    // Firestore'a bağlanmayı dene
-                    const auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (auth_token) {
-                        await signInWithCustomToken(auth, auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    console.log("Firebase authentication successful.");
-                    
-                    await loadItemMap();
-                    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
-                        showDashboard();
-                    } else {
-                        await handleAdminDiscordRedirect();
-                    }
-                } catch (error) { 
-                    console.error("Uygulama başlatma hatası:", error);
-                    showNotification(`Uygulama başlatılamadı: ${error.message}`, true);
-                }
+                 app = initializeApp(firebaseConfig);
+                 auth = getAuth(app);
+                 db = getFirestore(app);
+                 try { 
+                     await signInAnonymously(auth); 
+                     await loadItemMap();
+                     if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+                         showDashboard();
+                     } else {
+                         await handleAdminDiscordRedirect();
+                     }
+                 } catch (error) { console.error("Admin auth error", error); }
             }
             initializeAppAndAuth();
         });
     </script>
 </body>
 </html>
+
