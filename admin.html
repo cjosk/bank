@@ -193,8 +193,8 @@
                     <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
                     <div class="space-y-4">
                         <div>
-                            <label for="purchase-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Kesinti Oranı (%)</label>
-                            <input id="purchase-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 20" class="form-input w-full p-2 rounded-md">
+                            <label for="guild-tax-rate-input" class="block text-sm font-medium mb-1 text-gray-300">Guild Kesinti Oranı (%)</label>
+                            <input id="guild-tax-rate-input" type="number" step="1" min="0" max="100" placeholder="Örn: 20" class="form-input w-full p-2 rounded-md">
                             <p class="text-xs text-gray-400 mt-1">Loot'un net değerinden yüzde kaç kesinti yapılacağını belirtir.</p>
                         </div>
                         <button id="save-settings-button" class="w-full sm:w-auto px-5 py-2 rounded-md font-bold text-white bg-indigo-600 hover:bg-indigo-700">Ayarları Kaydet</button>
@@ -246,7 +246,7 @@
         const ITEM_LIST_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt';
         
         // --- GLOBAL DEĞİŞKENLER ---
-        let guildSettings = { taxRate: 0.20 }; // Varsayılan vergi oranı
+        let guildSettings = { taxRate: 0.20 }; // Varsayılan: %20 kesinti
         let ITEM_ID_MAP = {};
         
         // --- FIREBASE YAPILANDIRMASI ---
@@ -442,12 +442,10 @@
             window.calculateAndShowDistribution = (id, data) => {
                 const totalSilver = parseInt(document.getElementById(`amount-${id}`).value) || 0;
                 const partyMembers = data.partyMembers || [];
-                const netLootValue = totalSilver;
                 
                 // Kullanıcının sağladığı formüle göre hesaplama mantığı güncellendi.
-                const guildProfit = netLootValue * guildSettings.taxRate;
-                const totalPlayerPayout = netLootValue - guildProfit;
-
+                const guildProfit = totalSilver * guildSettings.taxRate;
+                const totalPlayerPayout = totalSilver - guildProfit;
                 const amountPerMember = partyMembers.length > 0 ? Math.floor(totalPlayerPayout / partyMembers.length) : 0;
                 
                 const resultsEl = document.getElementById(`calc-results-${id}`);
@@ -638,8 +636,8 @@
                 const settingsDoc = await getDoc(settingsRef);
                 if (settingsDoc.exists()) {
                     guildSettings = settingsDoc.data();
-                    const cutRate = (guildSettings.taxRate || 0) * 100;
-                    document.getElementById('purchase-rate-input').value = cutRate.toFixed(0);
+                    const taxRatePercentage = (guildSettings.taxRate || 0) * 100;
+                    document.getElementById('guild-tax-rate-input').value = taxRatePercentage.toFixed(0);
                 }
             }
             
@@ -719,11 +717,11 @@
             });
 
             document.getElementById('save-settings-button').addEventListener('click', async () => { 
-                const cutRate = parseFloat(document.getElementById('purchase-rate-input').value); 
-                if (isNaN(cutRate) || cutRate < 0 || cutRate > 100) return showNotification("Geçersiz kesinti oranı. 0-100 arası bir değer girin.", true); 
-                const taxRate = parseFloat((cutRate / 100).toPrecision(15)); 
+                const taxRatePercentage = parseFloat(document.getElementById('guild-tax-rate-input').value); 
+                if (isNaN(taxRatePercentage) || taxRatePercentage < 0 || taxRatePercentage > 100) return showNotification("Geçersiz kesinti oranı. 0-100 arası bir değer girin.", true); 
+                const taxRateDecimal = parseFloat((taxRatePercentage / 100).toPrecision(15)); 
                 const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); 
-                await setDoc(settingsRef, { taxRate: taxRate }, { merge: true }); 
+                await setDoc(settingsRef, { taxRate: taxRateDecimal }, { merge: true }); 
                 await loadGuildSettings(); 
                 showNotification("Ayarlar başarıyla kaydedildi."); 
             });
