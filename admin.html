@@ -590,18 +590,22 @@
 
             async function loadRegistrationLogs() {
                 const listEl = document.getElementById('registration-logs-list');
-                const usersSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/users`), orderBy('inGameName')));
+                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                const q = query(usersRef, orderBy('inGameName'));
+                const usersSnapshot = await getDocs(q);
                 
-                const matchedUsersDocs = usersSnapshot.docs.filter(doc => doc.data().discordDisplayName);
+                // discordId'si olan kullanıcıları filtrele
+                const matchedUsersDocs = usersSnapshot.docs.filter(doc => doc.data().discordId);
 
                 if(matchedUsersDocs.length === 0) { 
-                    listEl.innerHTML = '<tr><td colspan="3" class="text-center p-8 text-gray-400">Eşleşen kullanıcı kaydı bulunamadı.</td></tr>'; 
+                    listEl.innerHTML = '<tr><td colspan="3" class="text-center p-8 text-gray-400">Discord hesabını eşleştirmiş kullanıcı bulunamadı.</td></tr>'; 
                     return; 
                 }
 
                 listEl.innerHTML = matchedUsersDocs.map(doc => {
                     const user = doc.data();
-                    const discordName = user.discordDisplayName;
+                    // Görüntülenecek isim olarak discordUsername'i kullanalım, yoksa Id'yi gösterelim.
+                    const discordName = user.discordUsername || user.discordId;
                     const date = user.createdAt?.toDate()?.toLocaleDateString('tr-TR') || 'Bilinmiyor';
                     return `<tr class="border-b border-gray-700">
                         <td class="px-6 py-4">${discordName}</td>
