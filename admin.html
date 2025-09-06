@@ -32,10 +32,10 @@
         <div id="admin-login-view" class="flex items-center justify-center min-h-screen">
              <div class="w-full max-w-sm card p-8 shadow-2xl text-center rounded-2xl">
                  <h1 class="text-2xl font-bold text-white mb-2">Admin Paneli</h1>
-                 <p class="text-zinc-400 mb-6">Devam etmek için yönetici yetkisine sahip Discord hesabınla giriş yap.</p>
-                 <button id="admin-discord-login-button" class="rounded-lg font-bold text-white bg-[#5865F2] hover:bg-[#4752C4] w-full py-3 flex items-center justify-center gap-2 transition-transform transform hover:scale-105">
-                     <svg class="w-6 h-6" viewBox="0 0 24 24"><path fill="currentColor" d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.443.805-.632 1.29a18.168 18.168 0 0 0-5.485 0a17.3 17.3 0 0 0-.632-1.29a.074.074 0 0 0-.08-.037a19.791 19.791 0 0 0-4.885 1.515a.069.069 0 0 0-.032.059a19.342 19.342 0 0 0-1.622 5.585a.078.078 0 0 0 .028.083a17.9 17.9 0 0 0 4.1 2.624a.074.074 0 0 0 .089-.022a1.171 1.171 0 0 1 .494-.325a.074.074 0 0 0 .018-.111a12.112 12.112 0 0 0-1.88-1.084a.074.074 0 0 1-.038-.062a15.777 15.777 0 0 1 .413-2.91a.075.075 0 0 0 .043-.075a1.189 1.189 0 0 1 .018-.043a1.17 1.17 0 0 1 .1-.141a.071.071 0 0 0 .034-.044Z M12 16.117c-1.933 0-3.5-1.72-3.5-3.857c0-2.137 1.567-3.857 3.5-3.857s3.5 1.72 3.5 3.857c0 2.137-1.567 3.857-3.5 3.857Zm-4.136-3.857c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Zm8.272 0c0 1.233 1.042 2.232 2.327 2.232c.1 0 .2-.014.3-.028a.074.074 0 0 0 .048-.066a1.17 1.17 0 0 1-.162-1.164a1.17 1.17 0 0 1 .162-.164a.073.073 0 0 0 .066-.048a.074.074 0 0 0 .028-.153a2.321 2.321 0 0 0-2.763 1.562Z"/></svg>
-                     <span>Discord ile Giriş Yap</span>
+                 <p class="text-zinc-400 mb-6">Devam etmek için yönetici şifresini girin.</p>
+                 <input type="password" id="admin-password-input" class="form-input w-full p-3 rounded-lg mb-4 text-center" placeholder="Şifre">
+                 <button id="admin-login-button" class="rounded-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 w-full py-3 transition-colors">
+                     Giriş Yap
                  </button>
              </div>
         </div>
@@ -241,7 +241,7 @@
         import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, runTransaction, serverTimestamp, writeBatch, getDocs, orderBy, Timestamp, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- SABİTLER ---
-        const DISCORD_CLIENT_ID = "11412951643741356215"; // Botunuzun gerçek Client ID'sini girin
+        const ADMIN_PASSWORD = "166516";
         const GUILD_ID = "836109355745771520"; // Albion Online Guild ID'sini girin
         const ITEM_LIST_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt';
         
@@ -642,36 +642,6 @@
                 }
             }
             
-            async function handleAdminDiscordRedirect() {
-                 const fragment = new URLSearchParams(window.location.hash.slice(1));
-                 const [accessToken, tokenType] = [fragment.get('access_token'), fragment.get('token_type')];
-
-                 if (!accessToken) return;
-
-                 // URL'den token'ı temizle
-                 history.replaceState(null, null, window.location.pathname);
-
-                 try {
-                     const response = await fetch('https://discord.com/api/users/@me', {
-                         headers: { authorization: `${tokenType} ${accessToken}` },
-                     });
-                     const user = await response.json();
-                     
-                     const adminRef = doc(db, 'admins', user.id);
-                     const adminDoc = await getDoc(adminRef);
-
-                     if (adminDoc.exists()) {
-                         sessionStorage.setItem('isAdminAuthenticated', 'true');
-                         showDashboard();
-                     } else {
-                         showNotification("Giriş başarısız. Bu Discord hesabı yönetici değil.", true);
-                     }
-                 } catch (error) {
-                     console.error("Discord admin check failed:", error);
-                     showNotification("Discord ile kimlik doğrulanırken bir hata oluştu.", true);
-                 }
-            }
-            
             async function loadItemMap() {
                 try {
                     const response = await fetch(ITEM_LIST_URL);
@@ -694,11 +664,19 @@
             }
             
             // --- EVENT LISTENERS ---
-            document.getElementById('admin-discord-login-button').addEventListener('click', () => {
-                const redirectUri = window.location.origin + window.location.pathname;
-                const scope = 'identify';
-                const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${scope}`;
-                window.location.href = authUrl;
+            document.getElementById('admin-login-button').addEventListener('click', () => {
+                const password = document.getElementById('admin-password-input').value;
+                if (password === ADMIN_PASSWORD) {
+                    sessionStorage.setItem('isAdminAuthenticated', 'true');
+                    showDashboard();
+                } else {
+                    showNotification('Şifre yanlış!', true);
+                }
+            });
+            document.getElementById('admin-password-input').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('admin-login-button').click();
+                }
             });
 
             document.getElementById('admin-logout-button').addEventListener('click', () => { sessionStorage.removeItem('isAdminAuthenticated'); window.location.reload(); });
@@ -799,7 +777,7 @@
                      if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
                          showDashboard();
                      } else {
-                         await handleAdminDiscordRedirect();
+                         adminLoginView.classList.remove('hidden');
                      }
                  } catch (error) { console.error("Admin auth error", error); }
             }
