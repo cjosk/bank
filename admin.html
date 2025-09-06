@@ -285,14 +285,15 @@
                         
                         const data = depositDoc.data();
                         
-                        // YENİ, DAHA AÇIK HESAPLAMA MANTIĞI
                         const repairCost = data.repairCost || 0;
                         const netLootValue = totalSilver - repairCost;
+                        
                         const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0;
                         const totalPlayerPayout = netLootValue - guildProfit;
+                        
                         const amountPerMember = Math.floor(totalPlayerPayout / data.partyMembers.length);
 
-                        if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz.");
+                        if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz. Tamir masrafı satıştan yüksek olamaz.");
 
                         const partyMembersLower = data.partyMembers.map(name => name.toLowerCase());
                         const usersQuery = query(collection(db, `artifacts/${appId}/public/data/users`), where("inGameName_lowercase", "in", partyMembersLower));
@@ -460,7 +461,7 @@
                 });
             }
 
-            async function loadP2PLogs() {
+             async function loadP2PLogs() {
                 const logsListEl = document.getElementById('p2p-logs-list');
                 logsListEl.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>`;
                 const logsQuery = query(collection(db, `artifacts/${appId}/public/data/p2p_transfers`), orderBy("createdAt", "desc"));
