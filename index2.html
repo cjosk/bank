@@ -83,135 +83,133 @@
             </div>
         </div>
         
-        <div id="dashboard-view" class="hidden w-full max-w-7xl mx-auto p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col lg:flex-row gap-8">
-                <main class="flex-grow">
-                     <header class="flex flex-col sm:flex-row justify-between items-center mb-8 pb-6 border-b border-zinc-700">
-                        <div class="flex items-center gap-4">
-                            <img id="header-discord-avatar" src="" class="w-16 h-16 rounded-full border-2 border-zinc-600">
-                            <div>
-                                <h1 id="player-name" class="text-2xl font-extrabold text-white"></h1>
-                                <p class="text-sm text-zinc-400">[SUP] Team Supremacy</p>
-                            </div>
+        <div id="dashboard-view" class="hidden w-full max-w-6xl mx-auto p-4 sm:p-6 md:p-8">
+            <main>
+                 <header class="flex flex-col sm:flex-row justify-between items-center mb-8 pb-6 border-b border-zinc-700">
+                    <div class="flex items-center gap-4">
+                        <img id="header-discord-avatar" src="" class="w-16 h-16 rounded-full border-2 border-zinc-600">
+                        <div>
+                            <h1 id="player-name" class="text-2xl font-extrabold text-white"></h1>
+                            <p class="text-sm text-zinc-400">[SUP] Team Supremacy</p>
                         </div>
-                        <div class="flex items-center gap-6 sm:gap-8 mt-6 sm:mt-0">
-                            <div class="text-right">
-                                <p class="text-xs text-zinc-400 font-medium tracking-wider">GUILD KESİNTİSİ</p>
-                                <div class="flex items-center justify-end gap-2 mt-1">
-                                    <p id="guild-purchase-rate" class="text-xl font-bold" style="color: var(--accent-red);"></p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs text-zinc-400 font-medium tracking-wider">GÜNCEL BAKİYEN</p>
-                                 <div class="flex items-center justify-end gap-2 mt-1">
-                                    <p id="player-balance" class="text-3xl font-bold" style="color: var(--accent-green);"></p>
-                                    <img src="https://i.hizliresim.com/tsb3m7q.png" class="w-8 h-8">
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-            
-                    <div class="mb-8 border-b-2 border-zinc-800">
-                        <nav class="flex -mb-px space-x-6" aria-label="Tabs">
-                            <button id="tab-action" class="tab-button active py-3 px-1 text-sm font-bold tracking-wider">YENİ İŞLEM</button>
-                            <button id="tab-history" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">İŞLEM GEÇMİŞİM</button>
-                        </nav>
                     </div>
+                    <div class="flex items-center gap-6 sm:gap-8 mt-6 sm:mt-0">
+                        <div class="text-right">
+                            <p class="text-xs text-zinc-400 font-medium tracking-wider">GUILD KESİNTİSİ</p>
+                            <div class="flex items-center justify-end gap-2 mt-1">
+                                <p id="guild-purchase-rate" class="text-xl font-bold" style="color: var(--accent-red);"></p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-zinc-400 font-medium tracking-wider">GÜNCEL BAKİYEN</p>
+                             <div class="flex items-center justify-end gap-2 mt-1">
+                                <p id="player-balance" class="text-3xl font-bold" style="color: var(--accent-green);"></p>
+                                <img src="https://i.hizliresim.com/tsb3m7q.png" class="w-8 h-8">
+                            </div>
+                        </div>
+                    </div>
+                </header>
+        
+                <div class="mb-8 border-b-2 border-zinc-800">
+                    <nav class="flex -mb-px space-x-6" aria-label="Tabs">
+                        <button id="tab-action" class="tab-button active py-3 px-1 text-sm font-bold tracking-wider">YENİ İŞLEM</button>
+                        <button id="tab-history" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">İŞLEM GEÇMİŞİM</button>
+                        <button id="tab-players" class="tab-button py-3 px-1 text-sm font-bold tracking-wider">TÜM OYUNCULAR</button>
+                    </nav>
+                </div>
 
-                    <div id="action-content">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="card p-6 lg:p-8">
-                                <h2 class="text-xl font-bold mb-4" style="color: var(--accent-gold);">Örnek Satış Hesaplayıcı</h2>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="calc-total-value" class="block text-sm font-medium text-zinc-300">Gerçekleşen Toplam Satış</label>
-                                        <input type="number" id="calc-total-value" class="form-input w-full p-2 mt-1" placeholder="10000000">
-                                    </div>
-                                    <div>
-                                        <label for="calc-repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı</label>
-                                        <input type="number" id="calc-repair-cost" class="form-input w-full p-2 mt-1" placeholder="150000">
-                                    </div>
-                                    <div>
-                                        <label for="calc-party-count" class="block text-sm font-medium text-zinc-300">Parti Üye Sayısı</label>
-                                        <input type="number" id="calc-party-count" class="form-input w-full p-2 mt-1" placeholder="5">
-                                    </div>
+                <div id="action-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="card p-6 lg:p-8">
+                            <h2 class="text-xl font-bold mb-4" style="color: var(--accent-gold);">Örnek Satış Hesaplayıcı</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="calc-total-value" class="block text-sm font-medium text-zinc-300">Gerçekleşen Toplam Satış</label>
+                                    <input type="number" id="calc-total-value" class="form-input w-full p-2 mt-1" placeholder="10000000">
                                 </div>
-                                <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
-                                    <div class="flex justify-between text-sm mt-2">
-                                        <span class="text-zinc-400">Tamir Sonrası Net Tutar:</span>
-                                        <span id="calc-after-repair" class="font-medium text-zinc-200">0</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm mt-2">
-                                        <span class="text-zinc-400">Guild Kârı (<span id="calc-tax-rate-display">%20</span>):</span>
-                                        <span id="calc-guild-profit" class="font-medium" style="color: var(--accent-red);">- 0</span>
-                                    </div>
-                                    <div class="flex justify-between text-sm mt-2">
-                                        <span class="text-zinc-400">Oyunculara Kalan:</span>
-                                        <span id="calc-players-payout" class="font-medium text-zinc-200">0</span>
-                                    </div>
-                                     <div class="flex justify-between text-lg font-bold mt-4">
-                                        <span class="text-white">Kişi Başı Pay:</span>
-                                        <span id="calc-per-player" style="color: var(--accent-green);">0 Silver</span>
-                                    </div>
+                                <div>
+                                    <label for="calc-repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı</label>
+                                    <input type="number" id="calc-repair-cost" class="form-input w-full p-2 mt-1" placeholder="150000">
+                                </div>
+                                <div>
+                                    <label for="calc-party-count" class="block text-sm font-medium text-zinc-300">Parti Üye Sayısı</label>
+                                    <input type="number" id="calc-party-count" class="form-input w-full p-2 mt-1" placeholder="5">
                                 </div>
                             </div>
-                            <div class="space-y-8">
-                                <div id="deposit-form-container" class="card p-6 lg:p-8">
-                                    <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
-                                    <form id="deposit-form" class="space-y-4">
-                                        <div>
-                                            <label for="party-members" class="block text-sm font-medium text-zinc-300">Parti Üyeleri (Virgülle ayır)</label>
-                                            <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2" required></textarea>
-                                        </div>
-                                        <div>
-                                            <label for="estimated-value" class="block text-sm font-medium text-zinc-300">Tahmini Toplam Tab/Sandık Tutarı</label>
-                                            <input type="number" id="estimated-value" placeholder="Örn: 15000000" class="form-input w-full p-2" required>
-                                        </div>
-                                        <div>
-                                            <label for="repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı (Repair Cost)</label>
-                                            <input type="number" id="repair-cost" placeholder="Örn: 150000" class="form-input w-full p-2" required>
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-zinc-300">Ekran Görüntüsü</label>
-                                            <div id="file-drop-area" class="file-drop-area mt-1 p-6 text-center cursor-pointer transition-colors">
-                                                <p id="file-info" class="text-zinc-400">Görseli buraya sürükle veya seçmek için tıkla</p>
-                                                <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-secondary w-full py-2.5">Loot Yatırma Talebi Gönder</button>
-                                    </form>
+                            <div class="mt-6 pt-4 border-t" style="border-color: var(--border-color);">
+                                <div class="flex justify-between text-sm mt-2">
+                                    <span class="text-zinc-400">Tamir Sonrası Net Tutar:</span>
+                                    <span id="calc-after-repair" class="font-medium text-zinc-200">0</span>
                                 </div>
-                                 <div class="card p-6 lg:p-8">
-                                    <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
-                                    <form id="withdraw-form">
-                                         <div class="mb-4">
-                                             <label for="withdraw-amount" class="block text-sm font-medium text-zinc-300">Çekilecek Tutar</label>
-                                            <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 mt-1" required>
-                                        </div>
-                                        <button type="submit" class="btn btn-success w-full py-2.5">Çekim Talebi Oluştur</button>
-                                    </form>
+                                <div class="flex justify-between text-sm mt-2">
+                                    <span class="text-zinc-400">Guild Kârı (<span id="calc-tax-rate-display">%20</span>):</span>
+                                    <span id="calc-guild-profit" class="font-medium" style="color: var(--accent-red);">- 0</span>
+                                </div>
+                                <div class="flex justify-between text-sm mt-2">
+                                    <span class="text-zinc-400">Oyunculara Kalan:</span>
+                                    <span id="calc-players-payout" class="font-medium text-zinc-200">0</span>
+                                </div>
+                                 <div class="flex justify-between text-lg font-bold mt-4">
+                                    <span class="text-white">Kişi Başı Pay:</span>
+                                    <span id="calc-per-player" style="color: var(--accent-green);">0 Silver</span>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div id="history-content" class="hidden">
-                         <h2 class="text-xl font-bold mb-4 text-white">Tüm Taleplerim</h2>
-                         <div id="user-history-list" class="space-y-4">
-                            <p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>
-                         </div>
-                    </div>
-                </main>
-
-                <aside class="w-full lg:w-72 lg:flex-shrink-0">
-                    <div class="card p-4 sticky top-24">
-                        <h2 class="text-lg font-bold text-amber-400 mb-4 text-center">Online Oyuncular</h2>
-                        <div id="online-players-list" class="space-y-2 max-h-[60vh] overflow-y-auto">
-                            <p class="text-center text-zinc-400 p-4">Kimse online değil.</p>
+                        <div class="space-y-8">
+                            <div id="deposit-form-container" class="card p-6 lg:p-8">
+                                <h2 class="text-xl font-bold mb-4">Loot Yatır</h2>
+                                <form id="deposit-form" class="space-y-4">
+                                    <div>
+                                        <label for="party-members" class="block text-sm font-medium text-zinc-300">Parti Üyeleri (Virgülle ayır)</label>
+                                        <textarea id="party-members" rows="2" placeholder="Oyuncu1, Oyuncu2, Oyuncu3" class="form-textarea w-full p-2" required></textarea>
+                                    </div>
+                                    <div>
+                                        <label for="estimated-value" class="block text-sm font-medium text-zinc-300">Tahmini Toplam Tab/Sandık Tutarı</label>
+                                        <input type="number" id="estimated-value" placeholder="Örn: 15000000" class="form-input w-full p-2" required>
+                                    </div>
+                                    <div>
+                                        <label for="repair-cost" class="block text-sm font-medium text-zinc-300">Toplam Tamir Masrafı (Repair Cost)</label>
+                                        <input type="number" id="repair-cost" placeholder="Örn: 150000" class="form-input w-full p-2" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-zinc-300">Ekran Görüntüsü</label>
+                                        <div id="file-drop-area" class="file-drop-area mt-1 p-6 text-center cursor-pointer transition-colors">
+                                            <p id="file-info" class="text-zinc-400">Görseli buraya sürükle veya seçmek için tıkla</p>
+                                            <input type="file" id="screenshot-file" class="hidden" accept="image/png, image/jpeg">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-secondary w-full py-2.5">Loot Yatırma Talebi Gönder</button>
+                                </form>
+                            </div>
+                             <div class="card p-6 lg:p-8">
+                                <h2 class="text-xl font-bold mb-4">Silver Çek</h2>
+                                <form id="withdraw-form">
+                                     <div class="mb-4">
+                                         <label for="withdraw-amount" class="block text-sm font-medium text-zinc-300">Çekilecek Tutar</label>
+                                        <input id="withdraw-amount" type="number" placeholder="Örn: 5000000" class="form-input w-full p-2 mt-1" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-full py-2.5">Çekim Talebi Oluştur</button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </aside>
-            </div>
+                </div>
+
+                <div id="history-content" class="hidden">
+                     <h2 class="text-xl font-bold mb-4 text-white">Tüm Taleplerim</h2>
+                     <div id="user-history-list" class="space-y-4">
+                        <p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>
+                     </div>
+                </div>
+
+                 <div id="players-content" class="hidden">
+                    <h2 class="text-xl font-bold mb-4 text-white">Tüm Guild Üyeleri</h2>
+                    <input type="text" id="player-search-input" class="form-input w-full mb-4 p-2" placeholder="Oyuncu ara...">
+                    <div id="all-players-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <p class="text-center text-zinc-400 col-span-full p-4">Oyuncular yükleniyor...</p>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
     
@@ -237,7 +235,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, addDoc, collection, serverTimestamp, query, where, onSnapshot, getDocs, writeBatch, setDoc, runTransaction, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         const DISCORD_CLIENT_ID = "1412951643741356215";
@@ -259,6 +257,7 @@
         let guildSettings = { taxRate: 0.20 }; 
         let tempDiscordUser = null; 
         let p2pTargetUser = null;
+        let allPlayers = [];
 
         document.addEventListener('DOMContentLoaded', () => {
             const loginView = document.getElementById('login-view');
@@ -267,8 +266,10 @@
             const notification = document.getElementById('notification');
             const actionContent = document.getElementById('action-content');
             const historyContent = document.getElementById('history-content');
+            const playersContent = document.getElementById('players-content');
             const tabAction = document.getElementById('tab-action');
             const tabHistory = document.getElementById('tab-history');
+            const tabPlayers = document.getElementById('tab-players');
 
             function formatSilver(num) {
                 num = Number(num);
@@ -398,7 +399,7 @@
                 
                 await loadGuildSettings();
                 await setOnlineStatus(true);
-                listenToOnlinePlayers();
+                listenToAllPlayers();
 
                 const userRef = doc(db, `artifacts/${appId}/public/data/users`, currentUser.id);
                 onSnapshot(userRef, (doc) => {
@@ -423,31 +424,42 @@
                 }
             }
 
-            function listenToOnlinePlayers() {
-                const onlinePlayersListEl = document.getElementById('online-players-list');
-                const q = query(collection(db, `artifacts/${appId}/public/data/users`), where("isOnline", "==", true));
+            function listenToAllPlayers() {
+                const allPlayersListEl = document.getElementById('all-players-list');
+                const q = query(collection(db, `artifacts/${appId}/public/data/users`), orderBy("inGameName_lowercase"));
 
                 onSnapshot(q, (snapshot) => {
-                    const onlinePlayers = [];
+                    allPlayers = [];
                     snapshot.forEach(doc => {
                         if (doc.id !== currentUser.id) {
-                            onlinePlayers.push({ id: doc.id, ...doc.data() });
+                            allPlayers.push({ id: doc.id, ...doc.data() });
                         }
                     });
-
-                    if (onlinePlayers.length === 0) {
-                        onlinePlayersListEl.innerHTML = `<p class="text-center text-zinc-400 p-4">Kimse online değil.</p>`;
-                        return;
-                    }
-
-                    onlinePlayersListEl.innerHTML = onlinePlayers.map(player => `
-                        <div class="p-2 rounded-lg hover:bg-zinc-700/50 cursor-pointer flex items-center gap-3" onclick='window.openP2PModal(${JSON.stringify(player)})'>
-                            <img src="${getPlayerAvatar(player)}" class="w-8 h-8 rounded-full">
-                            <span class="font-medium text-sm">${player.inGameName}</span>
-                        </div>
-                    `).join('');
+                    renderAllPlayers();
                 });
             }
+
+            function renderAllPlayers(searchTerm = '') {
+                const allPlayersListEl = document.getElementById('all-players-list');
+                const filteredPlayers = allPlayers.filter(p => p.inGameName_lowercase.includes(searchTerm.toLowerCase()));
+
+                if (filteredPlayers.length === 0) {
+                    allPlayersListEl.innerHTML = `<p class="text-center text-zinc-400 col-span-full p-4">Oyuncu bulunamadı.</p>`;
+                    return;
+                }
+
+                allPlayersListEl.innerHTML = filteredPlayers.map(player => `
+                    <div class="card p-3 rounded-lg hover:border-amber-400 cursor-pointer flex items-center gap-3 transition" onclick='window.openP2PModal(${JSON.stringify(player)})'>
+                        <img src="${getPlayerAvatar(player)}" class="w-10 h-10 rounded-full">
+                        <span class="font-semibold text-sm">${player.inGameName}</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('player-search-input').addEventListener('input', (e) => {
+                renderAllPlayers(e.target.value);
+            });
+
 
             function getPlayerAvatar(player) {
                 if (player.discordId && player.discordAvatar) return `https://cdn.discordapp.com/avatars/${player.discordId}/${player.discordAvatar}.png`;
@@ -635,13 +647,14 @@
                 if (docSnap.exists() && docSnap.data().taxRate !== undefined) {
                     guildSettings = docSnap.data();
                 }
-                document.getElementById('guild-purchase-rate').textContent = `%${( (1 - guildSettings.taxRate) * 100).toFixed(0)}`;
+                document.getElementById('guild-purchase-rate').textContent = `%${(guildSettings.taxRate * 100).toFixed(0)}`;
                 document.getElementById('calc-tax-rate-display').textContent = `%${(guildSettings.taxRate * 100).toFixed(0)}`;
                 calculatePayout();
             }
 
-            tabAction.addEventListener('click', () => { tabAction.classList.add('active'); tabHistory.classList.remove('active'); actionContent.classList.remove('hidden'); historyContent.classList.add('hidden'); });
-            tabHistory.addEventListener('click', () => { tabHistory.classList.add('active'); tabAction.classList.remove('active'); historyContent.classList.remove('hidden'); actionContent.classList.add('hidden'); });
+            tabAction.addEventListener('click', () => { tabAction.classList.add('active'); tabHistory.classList.remove('active'); tabPlayers.classList.remove('active'); actionContent.classList.remove('hidden'); historyContent.classList.add('hidden'); playersContent.classList.add('hidden'); });
+            tabHistory.addEventListener('click', () => { tabHistory.classList.add('active'); tabAction.classList.remove('active'); tabPlayers.classList.remove('active'); historyContent.classList.remove('hidden'); actionContent.classList.add('hidden'); playersContent.classList.add('hidden'); });
+            tabPlayers.addEventListener('click', () => { tabPlayers.classList.add('active'); tabAction.classList.remove('active'); tabHistory.classList.remove('active'); playersContent.classList.remove('hidden'); actionContent.classList.add('hidden'); historyContent.classList.add('hidden'); });
             const dropArea = document.getElementById('file-drop-area');
             const fileInput = document.getElementById('screenshot-file');
             const fileInfo = document.getElementById('file-info');
