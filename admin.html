@@ -506,7 +506,7 @@
                     const discordUser = await response.json();
                     const adminRef = doc(db, "admins", discordUser.id);
                     const adminSnap = await getDoc(adminRef);
-                    if (adminSnap.exists()) {
+                    if (adminSnap.exists() && adminSnap.data().isAdmin === true) {
                         sessionStorage.setItem('isAdminAuthenticated', 'true');
                         showDashboard();
                     } else {
