@@ -49,6 +49,7 @@
                 <nav class="flex flex-wrap -mb-px space-x-4" aria-label="Tabs">
                     <button data-tab="requests" class="tab-button active py-2 px-4 font-medium text-gray-300 border-b-2">Bekleyen Talepler</button>
                     <button data-tab="optimization" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Satış Optimizasyonu</button>
+                    <button data-tab="p2p-logs" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Transfer Logları</button>
                     <button data-tab="history" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">İşlem Geçmişi</button>
                     <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar</button>
                     <button data-tab="guild" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Guild Yönetimi</button>
@@ -58,7 +59,7 @@
             </div>
 
             <div id="requests-content" class="tab-content">
-                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Loot Talepleri</h2>
                         <div id="deposit-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
@@ -67,6 +68,24 @@
                         <h2 class="text-2xl font-bold text-white mb-4">Bekleyen Çekim Talepleri</h2>
                         <div id="withdraw-requests-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Tüm talepler işlenmiş.</p></div>
                     </div>
+                </div>
+            </div>
+
+             <div id="p2p-logs-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Oyuncular Arası Transfer Geçmişi</h2>
+                <div class="card rounded-lg overflow-hidden">
+                    <table class="w-full text-sm text-left text-gray-300">
+                         <thead class="text-xs text-gray-400 uppercase bg-gray-700/50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Gönderen</th>
+                                <th scope="col" class="px-6 py-3">Alıcı</th>
+                                <th scope="col" class="px-6 py-3">Miktar</th>
+                                <th scope="col" class="px-6 py-3">Tarih</th>
+                            </tr>
+                        </thead>
+                        <tbody id="p2p-logs-list">
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -81,7 +100,7 @@
             </div>
             
             <div id="history-content" class="tab-content hidden">
-                <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
+                 <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
                  <div class="flex flex-col sm:flex-row gap-4 mb-4">
                     <input type="text" id="history-search-name" class="form-input flex-grow p-2 rounded-md" placeholder="Oyuncu adına göre ara...">
                     <input type="date" id="history-search-date" class="form-input p-2 rounded-md">
@@ -175,7 +194,7 @@
     
     <div id="price-details-modal" class="fixed inset-0 hidden modal-backdrop z-50">
         <div class="card w-full max-w-md p-6 rounded-lg shadow-lg relative">
-             <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+             <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
              <div class="flex items-center gap-4 mb-4">
                 <img id="modal-item-image" src="" class="w-16 h-16 bg-black/20 rounded-md">
                 <div>
@@ -265,9 +284,13 @@
                         if (!depositDoc.exists()) throw new Error("Talep bulunamadı.");
                         
                         const data = depositDoc.data();
+                        
+                        // YENİ, DAHA AÇIK HESAPLAMA MANTIĞI
                         const repairCost = data.repairCost || 0;
-                        const netAmount = (totalSilver - repairCost) * (1 - guildSettings.taxRate);
-                        const amountPerMember = Math.floor(netAmount / data.partyMembers.length);
+                        const netLootValue = totalSilver - repairCost;
+                        const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0;
+                        const totalPlayerPayout = netLootValue - guildProfit;
+                        const amountPerMember = Math.floor(totalPlayerPayout / data.partyMembers.length);
 
                         if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz.");
 
@@ -332,6 +355,7 @@
                                 if (target === 'reports') loadReportsData();
                                 if (target === 'history') loadHistoryData();
                                 if (target === 'logs') loadRegistrationLogs();
+                                if (target === 'p2p-logs') loadP2PLogs();
                             } else {
                                 content.classList.add('hidden');
                             }
@@ -391,7 +415,29 @@
                 let totalDepositedValue = 0, totalRepairCost = 0, totalGuildProfit = 0;
                 let dailyProfit = 0, weeklyProfit = 0, monthlyProfit = 0;
                 const depositors = {}, withdrawers = {};
-                depositsSnapshot.docs.forEach(doc => { const data = doc.data(); if (!data.processedAt) return; const amount = data.processedAmount || 0; const repairCost = data.repairCost || 0; const netLootValue = amount - repairCost; const processedDate = data.processedAt.toDate(); const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0; totalDepositedValue += amount; totalRepairCost += repairCost; totalGuildProfit += guildProfit; if (processedDate >= todayStart) dailyProfit += guildProfit; if (processedDate >= weekAgo) weeklyProfit += guildProfit; if (processedDate >= monthAgo) monthlyProfit += guildProfit; const amountToPlayers = netLootValue > 0 ? netLootValue * (1 - guildSettings.taxRate) : 0; const amountPerMember = amountToPlayers / data.partyMembers.length; data.partyMembers.forEach(name => { depositors[name] = (depositors[name] || 0) + amountPerMember; }); });
+                depositsSnapshot.docs.forEach(doc => { 
+                    const data = doc.data(); 
+                    if (!data.processedAt) return; 
+                    const amount = data.processedAmount || 0; 
+                    const repairCost = data.repairCost || 0; 
+                    const netLootValue = amount - repairCost; 
+                    const processedDate = data.processedAt.toDate(); 
+                    
+                    const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0; 
+                    
+                    totalDepositedValue += amount; 
+                    totalRepairCost += repairCost; 
+                    totalGuildProfit += guildProfit; 
+                    
+                    if (processedDate >= todayStart) dailyProfit += guildProfit; 
+                    if (processedDate >= weekAgo) weeklyProfit += guildProfit; 
+                    if (processedDate >= monthAgo) monthlyProfit += guildProfit; 
+
+                    const totalPlayerPayout = netLootValue - guildProfit;
+                    const amountPerMember = totalPlayerPayout > 0 ? totalPlayerPayout / data.partyMembers.length : 0;
+                    
+                    data.partyMembers.forEach(name => { depositors[name] = (depositors[name] || 0) + amountPerMember; }); 
+                });
                 withdrawalsSnapshot.docs.forEach(doc => { const data = doc.data(); const name = data.requesterName; withdrawers[name] = (withdrawers[name] || 0) + data.amount; });
                 document.getElementById('total-deposited-value').textContent = formatSilver(totalDepositedValue);
                 document.getElementById('total-repair-cost').textContent = formatSilver(totalRepairCost);
@@ -411,6 +457,30 @@
                 onSnapshot(logsQuery, (snapshot) => {
                     if (snapshot.empty) { logsListEl.innerHTML = `<tr><td colspan="3" class="text-center p-8 text-gray-400">Henüz bir kayıt logu yok.</td></tr>`; return; }
                     logsListEl.innerHTML = snapshot.docs.map(doc => { const data = doc.data(); const date = data.timestamp?.toDate()?.toLocaleString('tr-TR') || 'Bilinmiyor'; return `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50"><td class="px-6 py-4 font-medium text-white">${data.discordUsername} <span class="text-gray-400 text-xs">(${data.discordId})</span></td><td class="px-6 py-4">${data.inGameName}</td><td class="px-6 py-4">${date}</td></tr>`; }).join('');
+                });
+            }
+
+            async function loadP2PLogs() {
+                const logsListEl = document.getElementById('p2p-logs-list');
+                logsListEl.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-gray-400">Yükleniyor...</td></tr>`;
+                const logsQuery = query(collection(db, `artifacts/${appId}/public/data/p2p_transfers`), orderBy("createdAt", "desc"));
+                onSnapshot(logsQuery, (snapshot) => {
+                    if (snapshot.empty) {
+                        logsListEl.innerHTML = `<tr><td colspan="4" class="text-center p-8 text-gray-400">Henüz bir transfer yapılmadı.</td></tr>`;
+                        return;
+                    }
+                    logsListEl.innerHTML = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        const date = data.createdAt?.toDate()?.toLocaleString('tr-TR') || 'Bilinmiyor';
+                        return `
+                            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
+                                <td class="px-6 py-4 font-medium text-white">${data.fromName}</td>
+                                <td class="px-6 py-4">${data.toName}</td>
+                                <td class="px-6 py-4 text-green-400 font-semibold">${formatSilver(data.amount)}</td>
+                                <td class="px-6 py-4">${date}</td>
+                            </tr>
+                        `;
+                    }).join('');
                 });
             }
 
@@ -482,6 +552,7 @@
             document.getElementById('confirm-rejection').addEventListener('click', async () => { const reason = document.getElementById('rejection-reason').value.trim(); if (!reason) return showNotification("Lütfen bir red sebebi girin.", true); const { collectionName, id } = rejectionInfo; const ref = doc(db, `artifacts/${appId}/public/data/${collectionName}`, id); await writeBatch(db).update(ref, { status: 'rejected', rejectionReason: reason, processedAt: serverTimestamp() }).commit(); showNotification("Talep reddedildi."); rejectionModal.classList.add('hidden'); document.getElementById('rejection-reason').value = ''; });
             document.getElementById('save-settings-button').addEventListener('click', async () => { const purchaseRate = parseFloat(document.getElementById('purchase-rate-input').value); if (isNaN(purchaseRate) || purchaseRate < 0 || purchaseRate > 100) return showNotification("Geçersiz alış oranı. 0-100 arası bir değer girin.", true); const taxRate = parseFloat((1 - (purchaseRate / 100)).toPrecision(15)); const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild'); await setDoc(settingsRef, { taxRate: taxRate }, { merge: true }); await loadGuildSettings(); showNotification("Ayarlar başarıyla kaydedildi."); });
             document.getElementById('update-guild-members-button').addEventListener('click', async () => { const button = document.getElementById('update-guild-members-button'); button.disabled = true; button.textContent = "Güncelleniyor..."; try { const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`; const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`; const response = await fetch(proxyUrl); if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`); const members = await response.json(); if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası."); const usersRef = collection(db, `artifacts/${appId}/public/data/users`); const batch = writeBatch(db); let newMemberCount = 0; for (const member of members) { const memberNameLower = member.Name.toLowerCase(); const q = query(usersRef, where("inGameName_lowercase", "==", memberNameLower)); const snapshot = await getDocs(q); if (snapshot.empty) { const newUserRef = doc(usersRef); batch.set(newUserRef, { inGameName: member.Name, inGameName_lowercase: memberNameLower, balance: 0, createdAt: serverTimestamp() }); newMemberCount++; } } await batch.commit(); showNotification(`${newMemberCount} yeni üye başarıyla eklendi. Toplam ${members.length} üye güncel.`); } catch (error) { showNotification(`Hata: ${error.message}`, true); } finally { button.disabled = false; button.textContent = "Klan Üyelerini Veritabanıyla Senkronize Et"; } });
+            
             document.getElementById('analyze-log-button').addEventListener('click', async () => {
                 const logText = document.getElementById('log-input').value.trim();
                 if (!logText) return showNotification("Lütfen log verisini girin.", true);
