@@ -286,12 +286,14 @@
                         const data = depositDoc.data();
                         
                         const repairCost = data.repairCost || 0;
-                        const netLootValue = totalSilver - repairCost;
+                        const netLootValue = Math.max(totalSilver - repairCost, 0);
                         
-                        const guildProfit = netLootValue > 0 ? netLootValue * guildSettings.taxRate : 0;
+                        const guildProfit = netLootValue * guildSettings.taxRate;
                         const totalPlayerPayout = netLootValue - guildProfit;
                         
-                        const amountPerMember = Math.floor(totalPlayerPayout / data.partyMembers.length);
+                        const amountPerMember = data.partyMembers.length > 0
+                            ? Math.floor(totalPlayerPayout / data.partyMembers.length)
+                            : 0;
 
                         if (amountPerMember < 0) throw new Error("Net tutar negatif olamaz. Tamir masrafı satıştan yüksek olamaz.");
 
