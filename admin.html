@@ -28,7 +28,6 @@
 <body class="antialiased">
 
     <div id="admin-app" class="min-h-screen p-4 sm:p-6 md:p-8">
-        <!-- Giriş Ekranı -->
         <div id="admin-login-view" class="flex items-center justify-center min-h-screen">
              <div class="w-full max-w-sm card p-8 shadow-2xl text-center rounded-2xl">
                  <h1 class="text-2xl font-bold text-white mb-2">Admin Paneli</h1>
@@ -40,7 +39,6 @@
              </div>
         </div>
         
-        <!-- Yönetim Paneli -->
         <div id="admin-dashboard-view" class="hidden w-full max-w-7xl mx-auto">
              <header class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700">
                  <h1 class="text-3xl font-bold text-white">Yönetici Paneli</h1>
@@ -60,7 +58,6 @@
                  </nav>
              </div>
 
-            <!-- Bekleyen Talepler Sekmesi -->
             <div id="requests-content" class="tab-content">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div>
@@ -74,8 +71,7 @@
                 </div>
             </div>
 
-            <!-- Transfer Logları Sekmesi -->
-             <div id="p2p-logs-content" class="tab-content hidden">
+            <div id="p2p-logs-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Oyuncular Arası Transfer Geçmişi</h2>
                  <div class="card rounded-lg overflow-hidden">
                      <table class="w-full text-sm text-left text-gray-300">
@@ -94,7 +90,6 @@
                  </div>
              </div>
 
-            <!-- Satış Optimizasyonu Sekmesi -->
             <div id="optimization-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Satış Optimizasyonu (Europe Sunucusu)</h2>
                  <div class="card p-6 rounded-lg">
@@ -105,7 +100,6 @@
                  <div id="optimization-results" class="mt-8"></div>
             </div>
             
-            <!-- İşlem Geçmişi Sekmesi -->
             <div id="history-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Onaylanan/Reddedilen Tüm Talepler</h2>
                   <div class="flex flex-col sm:flex-row gap-4 mb-4">
@@ -115,7 +109,6 @@
                  <div id="history-list" class="space-y-4"><p class="p-8 text-center text-gray-400">Geçmiş yükleniyor...</p></div>
             </div>
 
-            <!-- Raporlar Sekmesi -->
             <div id="reports-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Genel Raporlar</h2>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -159,7 +152,6 @@
                  </div>
             </div>
             
-            <!-- Guild Yönetimi Sekmesi -->
             <div id="guild-content" class="tab-content hidden">
                  <div class="card p-6 rounded-lg">
                      <h2 class="text-xl font-bold text-white mb-4">Guild Yönetimi</h2>
@@ -168,8 +160,7 @@
                  </div>
             </div>
 
-            <!-- Kayıt Logları Sekmesi -->
-             <div id="logs-content" class="tab-content hidden">
+            <div id="logs-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Discord - Oyun Nick Eşleşme Logları</h2>
                  <div class="card rounded-lg overflow-hidden">
                      <table class="w-full text-sm text-left text-gray-300">
@@ -187,7 +178,6 @@
                  </div>
              </div>
 
-            <!-- Ayarlar Sekmesi -->
             <div id="settings-content" class="tab-content hidden">
                  <div class="card p-6 rounded-lg max-w-lg mx-auto">
                     <h2 class="text-xl font-bold text-white mb-4">Genel Ayarlar</h2>
@@ -204,7 +194,6 @@
         </div>
     </div>
     
-    <!-- Fiyat Detayları Modalı -->
     <div id="price-details-modal" class="fixed inset-0 hidden modal-backdrop z-50">
         <div class="card w-full max-w-md p-6 rounded-lg shadow-lg relative">
              <button id="close-price-modal" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
@@ -219,7 +208,6 @@
         </div>
     </div>
 
-    <!-- Reddetme Modalı -->
     <div id="rejection-modal" class="fixed inset-0 items-center justify-center hidden modal-backdrop z-50">
         <div class="card w-full max-w-md p-6 rounded-lg shadow-lg">
             <h2 class="text-2xl font-bold mb-4">Talebi Reddet</h2>
@@ -232,7 +220,6 @@
         </div>
     </div>
 
-    <!-- Bildirim Kutusu -->
     <div id="notification" class="fixed top-5 right-5 bg-green-500 text-white py-2 px-5 rounded-lg shadow-lg hidden z-50"></div>
 
     <script type="module">
@@ -242,7 +229,7 @@
 
         // --- SABİTLER ---
         const ADMIN_PASSWORD = "166516";
-        const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA"; // Albion Online Guild ID'sini girin
+        const GUILD_ID = "836109355745771520"; // Albion Online Guild ID'sini girin
         const ITEM_LIST_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt';
         
         // --- GLOBAL DEĞİŞKENLER ---
@@ -711,8 +698,11 @@
                 button.disabled = true; button.textContent = "Güncelleniyor..."; 
                 try { 
                     const apiUrl = `https://gameinfo-ams.albiononline.com/api/gameinfo/guilds/${GUILD_ID}/members`; 
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`; 
-                    const response = await fetch(proxyUrl); 
+                    const response = await fetch(`https://proxy.cors.sh/${apiUrl}`, {
+                      headers: {
+                        'x-cors-api-key': 'temp_0a7e3ec80c7fbf4139da77c9562965ba'
+                      }
+                    });
                     if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`); 
                     const members = await response.json(); 
                     if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası."); 
@@ -752,7 +742,11 @@
                      if (!itemIds) throw new Error("Log'da bilinen bir item bulunamadı.");
                      const locations = "Black Market,Bridgewatch,Caerleon,Fort Sterling,Lymhurst,Martlock,Thetford";
                      const priceApiUrl = `https://europe.albion-online-data.com/api/v2/stats/prices/${itemIds}?locations=${locations}&qualities=1,2,3,4,5`;
-                     const priceResponse = await fetch(priceApiUrl);
+                     const priceResponse = await fetch(`https://proxy.cors.sh/${priceApiUrl}`, {
+                       headers: {
+                         'x-cors-api-key': 'temp_0a7e3ec80c7fbf4139da77c9562965ba'
+                       }
+                     });
                      if (!priceResponse.ok) throw new Error("Fiyat verileri alınamadı.");
                      const priceData = await priceResponse.json();
                      const cityGroups = {};
@@ -786,4 +780,3 @@
     </script>
 </body>
 </html>
-
