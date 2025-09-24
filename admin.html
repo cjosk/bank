@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #1a202c; color: #e2e8f0; }
-        .form-input, .form-textarea { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
+        .form-input, .form-textarea, .form-select { background-color: #2d3748; border-color: #4a5568; color: #e2e8f0; }
         .card { background-color: #2d3748; border: 1px solid #4a5568; }
         .btn-action { background-color: #4a5568; border: 1px solid #718096; }
         .tab-button { border-color: transparent; }
@@ -71,15 +71,21 @@
                     </div>
                 </div>
             </div>
-
+            
             <div id="balances-content" class="tab-content hidden">
                 <h2 class="text-2xl font-bold text-white mb-4">Oyuncu Bakiyeleri</h2>
-                <input type="text" id="player-balance-search-input" class="form-input w-full p-3 rounded-lg mb-6" placeholder="Oyuncu adıyla ara...">
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <input type="text" id="player-balance-search-input" class="form-input flex-grow p-3 rounded-lg" placeholder="Oyuncu adıyla ara...">
+                    <select id="player-balance-sort" class="form-select p-3 rounded-lg">
+                        <option value="highest">En Yüksek Bakiye</option>
+                        <option value="lowest">En Düşük Bakiye</option>
+                        <option value="az">Alfabetik (A-Z)</option>
+                    </select>
+                </div>
                 <div id="player-balance-list" class="space-y-2">
                     <p class="p-8 text-center text-gray-400">Oyuncular yükleniyor...</p>
                 </div>
             </div>
-
 
             <div id="p2p-logs-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Oyuncular Arası Transfer Geçmişi</h2>
@@ -513,7 +519,8 @@
                         let details = '';
 
                         if (item.type === 'deposit') {
-                            details = `<p><b>Yatırma:</b> ${item.submitterName}</p><p><b>İşlenen Tutar:</b> ${formatSilver(item.processedAmount || 0)}</p>`;
+                             const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" class="text-xs text-indigo-400 hover:underline">SS Görüntüle</a>` : '';
+                            details = `<p><b>Yatırma:</b> ${item.submitterName}</p><p class="text-sm text-gray-400"><b>Parti:</b> ${item.partyMembers.join(', ')}</p><p><b>İşlenen Tutar:</b> ${formatSilver(item.processedAmount || 0)}</p>${screenshotLink}`;
                         } else {
                             details = `<p><b>Çekim:</b> ${item.requesterName}</p><p><b>Miktar:</b> ${formatSilver(item.amount || 0)}</p>`;
                         }
@@ -543,7 +550,6 @@
                     totalPlayerBalance += doc.data().balance || 0;
                 });
                 document.getElementById('total-player-balance').textContent = formatSilver(totalPlayerBalance);
-
 
                 const completedDepositsSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "completed")));
                 let totalDeposited = 0, totalRepair = 0, totalProfit = 0;
@@ -644,7 +650,7 @@
             }
             
             async function loadAllPlayersForSearch() {
-                if (allPlayersForBalanceSearch.length > 0) return; // Veri zaten yüklendiyse tekrar yükleme
+                if (allPlayersForBalanceSearch.length > 0) { renderPlayerBalances(); return; }
                 try {
                     const usersSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/users`), orderBy("inGameName_lowercase")));
                     allPlayersForBalanceSearch = usersSnapshot.docs.map(doc => doc.data());
@@ -655,9 +661,20 @@
                 }
             }
 
-            function renderPlayerBalances(searchTerm = '') {
+            function renderPlayerBalances() {
                 const listEl = document.getElementById('player-balance-list');
-                const filteredPlayers = allPlayersForBalanceSearch.filter(p => p.inGameName.toLowerCase().includes(searchTerm.toLowerCase()));
+                const searchTerm = document.getElementById('player-balance-search-input').value.toLowerCase();
+                const sortMethod = document.getElementById('player-balance-sort').value;
+                
+                let filteredPlayers = [...allPlayersForBalanceSearch].filter(p => p.inGameName.toLowerCase().includes(searchTerm));
+
+                if (sortMethod === 'highest') {
+                    filteredPlayers.sort((a, b) => (b.balance || 0) - (a.balance || 0));
+                } else if (sortMethod === 'lowest') {
+                    filteredPlayers.sort((a, b) => (a.balance || 0) - (b.balance || 0));
+                } else if (sortMethod === 'az') {
+                    filteredPlayers.sort((a,b) => a.inGameName.localeCompare(b.inGameName));
+                }
 
                 if (filteredPlayers.length === 0) {
                     listEl.innerHTML = `<p class="text-center text-gray-400 col-span-full p-4">Oyuncu bulunamadı.</p>`;
@@ -672,9 +689,8 @@
                 `).join('');
             }
 
-            document.getElementById('player-balance-search-input').addEventListener('input', (e) => {
-                renderPlayerBalances(e.target.value);
-            });
+            document.getElementById('player-balance-search-input').addEventListener('input', renderPlayerBalances);
+            document.getElementById('player-balance-sort').addEventListener('change', renderPlayerBalances);
 
 
             async function loadGuildSettings() {
