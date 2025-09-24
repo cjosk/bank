@@ -51,9 +51,33 @@
         .tab-button { border-color: transparent; transition: all 0.2s ease-in-out; color: var(--text-secondary); padding: 0.75rem 0.25rem; position: relative; }
         .tab-button.active { color: var(--accent-gold); }
         .tab-button.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background-color: var(--accent-gold); border-radius: 2px; }
+        
+        /* Duyuru Barı Stilleri */
+        .announcement-bar {
+            background-color: #18181b;
+            color: #f59e0b;
+            padding: 0.5rem 0;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .announcement-bar p {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 30s linear infinite;
+        }
+        @keyframes marquee {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
     </style>
 </head>
 <body class="antialiased">
+    
+    <div class="announcement-bar">
+        <p id="announcement-text">Team Supremacy Klan Kasasına Hoş Geldiniz! Lootlarınızı güvenle yatırabilir ve bakiyenizi anlık olarak takip edebilirsiniz. Sorularınız için guild yönetimine ulaşabilirsiniz.</p>
+    </div>
 
     <div class="w-full bg-black/30 p-4 flex items-center justify-center border-b border-zinc-800 backdrop-blur-sm sticky top-0 z-50">
         <img src="https://i.hizliresim.com/mred25t.png" alt="Team Supremacy Logo" class="h-10">
@@ -584,20 +608,30 @@
 
             function listenToUserHistory() {
                 const historyListEl = document.getElementById('user-history-list');
-                const renderHistory = async () => {
-                    const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
-                    const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
-                    const depositsQuery = query(depositsRef, where("submitterId", "==", currentUser.id));
-                    const withdrawalsQuery = query(withdrawalsRef, where("requesterId", "==", currentUser.id));
-                    const [depositsSnapshot, withdrawalsSnapshot] = await Promise.all([ getDocs(depositsQuery), getDocs(withdrawalsQuery) ]);
-                    const deposits = depositsSnapshot.docs.map(doc => ({ type: 'Loot Yatırma', ...doc.data() }));
-                    const withdrawals = withdrawalsSnapshot.docs.map(doc => ({ type: 'Silver Çekim', ...doc.data() }));
-                    const allHistory = [...deposits, ...withdrawals].sort((a, b) => {
+                const depositsRef = collection(db, `artifacts/${appId}/public/data/deposits`);
+                const withdrawalsRef = collection(db, `artifacts/${appId}/public/data/withdrawals`);
+                
+                const qSubmitted = query(depositsRef, where("submitterId", "==", currentUser.id));
+                const qPartyMember = query(depositsRef, where("partyMembers", "array-contains", currentUser.inGameName));
+                const qWithdrawals = query(withdrawalsRef, where("requesterId", "==", currentUser.id));
+
+                let allHistory = [];
+                const processedDepositIds = new Set(); // Duplike kayıtları engellemek için
+
+                const render = () => {
+                    // Tarihe göre sırala
+                    allHistory.sort((a, b) => {
                         const dateA = a.processedAt || a.submittedAt || a.requestedAt;
                         const dateB = b.processedAt || b.submittedAt || b.requestedAt;
-                        if (!dateA || !dateB) return 0; return dateB.toDate() - dateA.toDate();
+                        if (!dateA || !dateB) return 0;
+                        return dateB.toDate() - dateA.toDate();
                     });
-                    if (allHistory.length === 0) { historyListEl.innerHTML = `<p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>`; return; }
+                    
+                    if (allHistory.length === 0) {
+                        historyListEl.innerHTML = `<p class="text-center text-zinc-400">Henüz bir işlem yapmadınız.</p>`;
+                        return;
+                    }
+
                     historyListEl.innerHTML = allHistory.map(item => {
                         const date = (item.processedAt || item.submittedAt || item.requestedAt)?.toDate()?.toLocaleString('tr-TR') || 'Tarih Yok';
                         let statusClass, statusText;
@@ -607,21 +641,39 @@
                             default: statusClass = 'bg-yellow-500'; statusText = 'Beklemede';
                         }
                         const reasonHtml = item.status === 'rejected' && item.rejectionReason ? `<p class="text-xs mt-1" style="color:var(--accent-red);">${item.rejectionReason}</p>` : '';
+                        
                         let detailsHtml = '';
                         if (item.type === 'Loot Yatırma') {
-                            const estimatedValueText = `Tahmini Değer: <span class="font-semibold text-zinc-200">${formatSilver(item.estimatedValue || 0)}</span>`;
-                            const repairCostText = `Tamir: <span class="font-semibold text-zinc-200">${formatSilver(item.repairCost || 0)}</span>`;
+                            const submitterText = `Yatıran: <span class="font-semibold">${item.submitterName}</span>`;
+                            const partyText = `Parti: ${(item.partyMembers || []).join(', ')}`;
                             const screenshotLink = item.imageUrl ? `<a href="${item.imageUrl}" target="_blank" style="color:var(--accent-gold);" class="hover:underline">Görsel</a>` : '';
-                            detailsHtml = `<div class="text-xs text-zinc-400 mt-2 flex flex-wrap gap-x-4 gap-y-1">${estimatedValueText} | ${repairCostText} | ${screenshotLink}</div>`;
+                            detailsHtml = `<div class="text-xs text-zinc-400 mt-2 flex flex-wrap gap-x-4 gap-y-1">${submitterText} | ${partyText} | ${screenshotLink}</div>`;
                         }
-                        const amountText = item.type === 'Silver Çekim' ? `${formatSilver(item.amount || 0)} Silver` : `Parti: ${(item.partyMembers || []).join(', ')}`;
+
+                        const amountText = item.type === 'Silver Çekim' ? `${formatSilver(item.amount || 0)} Silver` : `İşlenen: ${formatSilver(item.processedAmount || 0)}`;
+
                         return `<div class="card p-4"><div class="flex justify-between items-start"><div><p class="font-bold">${item.type}</p><p class="text-sm text-zinc-300">${amountText}</p>${detailsHtml}${reasonHtml}</div><div class="text-right flex-shrink-0 ml-4"><span class="text-xs font-bold text-white px-2 py-1 rounded-full ${statusClass}">${statusText}</span><p class="text-xs text-zinc-400 mt-2">${date}</p></div></div></div>`;
                     }).join('');
                 };
-                onSnapshot(query(collection(db, `artifacts/${appId}/public/data/deposits`), where("submitterId", "==", currentUser.id)), renderHistory);
-                onSnapshot(query(collection(db, `artifacts/${appId}/public/data/withdrawals`), where("requesterId", "==", currentUser.id)), renderHistory);
+
+                const updateHistory = (snapshot, type) => {
+                    snapshot.docs.forEach(doc => {
+                        const data = { id: doc.id, type, ...doc.data() };
+                        const existingIndex = allHistory.findIndex(item => item.id === doc.id);
+                        if (existingIndex > -1) {
+                            allHistory[existingIndex] = data; // Mevcut kaydı güncelle
+                        } else {
+                            allHistory.push(data); // Yeni kayıt ekle
+                        }
+                    });
+                    render();
+                };
+
+                onSnapshot(qSubmitted, (snapshot) => updateHistory(snapshot, 'Loot Yatırma'));
+                onSnapshot(qPartyMember, (snapshot) => updateHistory(snapshot, 'Loot Yatırma'));
+                onSnapshot(qWithdrawals, (snapshot) => updateHistory(snapshot, 'Silver Çekim'));
             }
-            
+
             const calcInputs = ['calc-total-value', 'calc-repair-cost', 'calc-party-count'];
             calcInputs.forEach(id => document.getElementById(id).addEventListener('input', calculatePayout));
             
@@ -695,4 +747,3 @@
     </script>
 </body>
 </html>
-
