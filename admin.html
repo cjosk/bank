@@ -49,6 +49,7 @@
                  <nav class="flex flex-wrap -mb-px space-x-4" aria-label="Tabs">
                      <button data-tab="requests" class="tab-button active py-2 px-4 font-medium text-gray-300 border-b-2">Bekleyen Talepler</button>
                      <button data-tab="optimization" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Satış Optimizasyonu</button>
+                     <button data-tab="balances" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Oyuncu Bakiyeleri</button>
                      <button data-tab="p2p-logs" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Transfer Logları</button>
                      <button data-tab="history" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">İşlem Geçmişi</button>
                      <button data-tab="reports" class="tab-button py-2 px-4 font-medium text-gray-300 border-b-2">Raporlar</button>
@@ -70,6 +71,15 @@
                     </div>
                 </div>
             </div>
+
+            <div id="balances-content" class="tab-content hidden">
+                <h2 class="text-2xl font-bold text-white mb-4">Oyuncu Bakiyeleri</h2>
+                <input type="text" id="player-balance-search-input" class="form-input w-full p-3 rounded-lg mb-6" placeholder="Oyuncu adıyla ara...">
+                <div id="player-balance-list" class="space-y-2">
+                    <p class="p-8 text-center text-gray-400">Oyuncular yükleniyor...</p>
+                </div>
+            </div>
+
 
             <div id="p2p-logs-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Oyuncular Arası Transfer Geçmişi</h2>
@@ -111,7 +121,11 @@
 
             <div id="reports-content" class="tab-content hidden">
                  <h2 class="text-2xl font-bold text-white mb-4">Genel Raporlar</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                     <div class="card p-4 rounded-lg text-center">
+                         <p class="text-sm text-gray-400">Havuzdaki Toplam Silver</p>
+                         <p id="total-player-balance" class="text-2xl font-bold text-green-400">0</p>
+                     </div>
                      <div class="card p-4 rounded-lg text-center">
                          <p class="text-sm text-gray-400">Yatırılan Toplam Loot</p>
                          <p id="total-deposited-value" class="text-2xl font-bold">0</p>
@@ -229,12 +243,13 @@
 
         // --- SABİTLER ---
         const ADMIN_PASSWORD = "166516";
-        const GUILD_ID = "MsXlz1fUQFySJSqG4HiGbA"; // Albion Online Guild ID'sini girin
+        const GUILD_ID = "836109355745771520"; // Albion Online Guild ID'sini girin
         const ITEM_LIST_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt';
         
         // --- GLOBAL DEĞİŞKENLER ---
         let guildSettings = { taxRate: 0.20 }; // Varsayılan: %20 kesinti
         let ITEM_ID_MAP = {};
+        let allPlayersForBalanceSearch = [];
         
         // --- FIREBASE YAPILANDIRMASI ---
         const firebaseConfig = {
@@ -385,6 +400,7 @@
                                 if (target === 'history') loadHistoryData();
                                 if (target === 'logs') loadRegistrationLogs();
                                 if (target === 'p2p-logs') loadP2PLogs();
+                                if (target === 'balances') loadAllPlayersForSearch();
                             } else {
                                 content.classList.add('hidden');
                             }
@@ -520,6 +536,15 @@
             }
 
             async function loadReportsData() {
+                // Toplam oyuncu bakiyesini hesapla
+                const usersSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/users`)));
+                let totalPlayerBalance = 0;
+                usersSnapshot.forEach(doc => {
+                    totalPlayerBalance += doc.data().balance || 0;
+                });
+                document.getElementById('total-player-balance').textContent = formatSilver(totalPlayerBalance);
+
+
                 const completedDepositsSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/deposits`), where("status", "==", "completed")));
                 let totalDeposited = 0, totalRepair = 0, totalProfit = 0;
                 let daily = 0, weekly = 0, monthly = 0;
@@ -617,6 +642,40 @@
                      </tr>`;
                  }).join('');
             }
+            
+            async function loadAllPlayersForSearch() {
+                if (allPlayersForBalanceSearch.length > 0) return; // Veri zaten yüklendiyse tekrar yükleme
+                try {
+                    const usersSnapshot = await getDocs(query(collection(db, `artifacts/${appId}/public/data/users`), orderBy("inGameName_lowercase")));
+                    allPlayersForBalanceSearch = usersSnapshot.docs.map(doc => doc.data());
+                    renderPlayerBalances();
+                } catch (error) {
+                    console.error("Oyuncu bakiyeleri yüklenirken hata:", error);
+                    document.getElementById('player-balance-list').innerHTML = `<p class="p-8 text-center text-red-400">Oyuncular yüklenemedi.</p>`;
+                }
+            }
+
+            function renderPlayerBalances(searchTerm = '') {
+                const listEl = document.getElementById('player-balance-list');
+                const filteredPlayers = allPlayersForBalanceSearch.filter(p => p.inGameName.toLowerCase().includes(searchTerm.toLowerCase()));
+
+                if (filteredPlayers.length === 0) {
+                    listEl.innerHTML = `<p class="text-center text-gray-400 col-span-full p-4">Oyuncu bulunamadı.</p>`;
+                    return;
+                }
+
+                listEl.innerHTML = filteredPlayers.map(player => `
+                    <div class="card p-4 rounded-lg flex justify-between items-center">
+                        <span class="font-semibold text-white">${player.inGameName}</span>
+                        <span class="font-mono text-green-400 text-lg">${formatSilver(player.balance || 0)}</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('player-balance-search-input').addEventListener('input', (e) => {
+                renderPlayerBalances(e.target.value);
+            });
+
 
             async function loadGuildSettings() {
                 const settingsRef = doc(db, `artifacts/${appId}/public/data/settings`, 'guild');
@@ -702,7 +761,7 @@
                       headers: {
                         'x-cors-api-key': 'temp_0a7e3ec80c7fbf4139da77c9562965ba'
                       }
-                    });
+                    }); 
                     if (!response.ok) throw new Error(`API'den veri alınamadı. (Hata: ${response.status})`); 
                     const members = await response.json(); 
                     if (members.length === 0) throw new Error("Guild'de üye bulunamadı veya API hatası."); 
